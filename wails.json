@@ -1,0 +1,19 @@
+{
+  "name": "hashcat-gui",
+  "outputfilename": "hashcat-gui",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "jashi",
+    "email": "jashi@example.com"
+  },
+  "info": {
+    "companyName": "Hashcat GUI",
+    "productName": "hashcat-gui",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright 2026",
+    "comments": "A modern Hashcat desktop application"
+  }
+}

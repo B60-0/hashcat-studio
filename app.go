@@ -1,0 +1,207 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"hashcat-gui/internal/assets"
+	"hashcat-gui/internal/hashcat"
+	"hashcat-gui/internal/settings"
+	"hashcat-gui/internal/tasks"
+)
+
+// App struct
+type App struct {
+	ctx             context.Context
+	settingsManager *settings.SettingsManager
+	assetManager    *assets.AssetManager
+	taskManager     *tasks.TaskManager
+}
+
+// NewApp creates a new App application struct
+func NewApp() *App {
+	sm, err := settings.New()
+	if err != nil {
+		fmt.Printf("Failed to initialize settings manager: %v\n", err)
+	}
+
+	am := assets.New()
+	tm := tasks.NewManager()
+
+	return &App{
+		settingsManager: sm,
+		assetManager:    am,
+		taskManager:     tm,
+	}
+}
+
+// startup is called when the app starts. The context is saved
+// so we can call the runtime methods
+func (a *App) startup(ctx context.Context) {
+	a.ctx = ctx
+	a.taskManager.SetContext(ctx)
+}
+
+// GetSettings returns the current user settings
+func (a *App) GetSettings() settings.Settings {
+	if a.settingsManager == nil {
+		return settings.Settings{}
+	}
+	return a.settingsManager.Get()
+}
+
+// UpdateSettings updates the user settings and saves them
+func (a *App) UpdateSettings(s settings.Settings) error {
+	if a.settingsManager == nil {
+		return fmt.Errorf("settings manager not initialized")
+	}
+	return a.settingsManager.Update(s)
+}
+
+type AssetFolders struct {
+	HashesDir       string `json:"hashesDir"`
+	DictionariesDir string `json:"dictionariesDir"`
+	RulesDir        string `json:"rulesDir"`
+	MasksDir        string `json:"masksDir"`
+}
+
+// GetAssetFolders returns the configured asset directories
+func (a *App) GetAssetFolders() AssetFolders {
+	if a.settingsManager == nil {
+		return AssetFolders{}
+	}
+	s := a.settingsManager.Get()
+	return AssetFolders{
+		HashesDir:       s.HashesDir,
+		DictionariesDir: s.DictionariesDir,
+		RulesDir:        s.RulesDir,
+		MasksDir:        s.MasksDir,
+	}
+}
+
+type ScannedAssets struct {
+	Hashes       []string `json:"hashes"`
+	Dictionaries []string `json:"dictionaries"`
+	Rules        []string `json:"rules"`
+	Masks        []string `json:"masks"`
+}
+
+// ScanAssets recursively scans all the asset folders and returns the results
+func (a *App) ScanAssets() (ScannedAssets, error) {
+	folders := a.GetAssetFolders()
+	result := ScannedAssets{
+		Hashes:       []string{},
+		Dictionaries: []string{},
+		Rules:        []string{},
+		Masks:        []string{},
+	}
+
+	if a.assetManager == nil {
+		return result, fmt.Errorf("asset manager not initialized")
+	}
+
+	if folders.HashesDir != "" {
+		if files, err := a.assetManager.ScanDir(folders.HashesDir); err == nil {
+			result.Hashes = files
+		}
+	}
+	if folders.DictionariesDir != "" {
+		if files, err := a.assetManager.ScanDir(folders.DictionariesDir); err == nil {
+			result.Dictionaries = files
+		}
+	}
+	if folders.RulesDir != "" {
+		if files, err := a.assetManager.ScanDir(folders.RulesDir); err == nil {
+			result.Rules = files
+		}
+	}
+	if folders.MasksDir != "" {
+		if files, err := a.assetManager.ScanDir(folders.MasksDir); err == nil {
+			result.Masks = files
+		}
+	}
+
+	return result, nil
+}
+
+// ValidateHashcatBinary checks if the specified hashcat binary is valid
+func (a *App) ValidateHashcatBinary(path string) hashcat.HashcatBinaryInfo {
+	return hashcat.ValidateHashcatBinary(path)
+}
+
+// GetDevices returns the output of hashcat -I
+func (a *App) GetDevices() (string, error) {
+	if a.settingsManager == nil {
+		return "", fmt.Errorf("settings manager not initialized")
+	}
+	path := a.settingsManager.Get().HashcatBinaryPath
+	if path == "" {
+		return "", fmt.Errorf("hashcat binary path not set")
+	}
+	return hashcat.GetDevices(path)
+}
+
+// RunBenchmark runs a hashcat benchmark for a specific mode
+func (a *App) RunBenchmark(hashMode int) (string, error) {
+	if a.settingsManager == nil {
+		return "", fmt.Errorf("settings manager not initialized")
+	}
+	path := a.settingsManager.Get().HashcatBinaryPath
+	if path == "" {
+		return "", fmt.Errorf("hashcat binary path not set")
+	}
+	return hashcat.RunBenchmark(path, hashMode)
+}
+
+// --- Task Manager APIs ---
+
+// CreateTask builds args and creates a queued task
+func (a *App) CreateTask(config hashcat.HashcatArgs) (string, error) {
+	if a.settingsManager == nil {
+		return "", fmt.Errorf("settings manager not initialized")
+	}
+	path := a.settingsManager.Get().HashcatBinaryPath
+
+	args, err := config.Build()
+	if err != nil {
+		return "", err
+	}
+
+	return a.taskManager.CreateTask(path, args)
+}
+
+// PreviewTask returns the string array of arguments without creating a task
+func (a *App) PreviewTask(config hashcat.HashcatArgs) ([]string, error) {
+	return config.Build()
+}
+
+func (a *App) StartTask(id string) error {
+	return a.taskManager.StartTask(id)
+}
+
+func (a *App) PauseTask(id string) error {
+	return a.taskManager.PauseTask(id)
+}
+
+func (a *App) ResumeTask(id string) error {
+	return a.taskManager.ResumeTask(id)
+}
+
+func (a *App) CheckpointTask(id string) error {
+	return a.taskManager.CheckpointTask(id)
+}
+
+func (a *App) SkipTask(id string) error {
+	return a.taskManager.SkipTask(id)
+}
+
+func (a *App) QuitTask(id string) error {
+	return a.taskManager.QuitTask(id)
+}
+
+func (a *App) DeleteTask(id string) error {
+	return a.taskManager.DeleteTask(id)
+}
+
+func (a *App) ListTasks() []tasks.TaskInfo {
+	return a.taskManager.ListTasks()
+}

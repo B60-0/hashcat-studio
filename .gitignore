@@ -1,0 +1,47 @@
+# Wails Build Artifacts
+build/bin/
+build/obj/
+wails.json.user
+
+# Go
+bin/
+pkg/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Node/React (just in case root has them, though frontend has its own)
+node_modules/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Test Data
+testdata/
+
+# OS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.settings/
