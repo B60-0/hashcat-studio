@@ -63,17 +63,17 @@ jobs:
       - name: Build app
         run: wails build -clean
 
+      - name: Install create-dmg
+        if: runner.os == 'macOS'
+        run: brew install create-dmg
+
       - name: Package macOS DMG
         if: runner.os == 'macOS'
         run: |
-          mkdir -p dist dmgroot
-          cp -R "${{ matrix.binary }}" dmgroot/
-          ln -s /Applications dmgroot/Applications
-          hdiutil create \
-            -volname "Hashcat Studio" \
-            -srcfolder dmgroot \
-            -ov \
-            -format UDZO \
+          mkdir -p dist
+          chmod +x build/darwin/dmg/package.sh
+          build/darwin/dmg/package.sh \
+            "${{ matrix.binary }}" \
             "dist/${{ matrix.artifact }}.dmg"
 
       - name: Package Unix build

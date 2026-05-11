@@ -103,9 +103,10 @@ export const Setup = ({ initialState, onComplete }: SetupProps) => {
         });
         setStage('done');
         setTimeout(onComplete, 650);
-      } else {
-        setError(state.error || 'Hashcat could not be validated.');
+      } else if (state.error) {
+        setError(state.error);
       }
+      // No error and not valid → user cancelled the folder picker. Stay on the choice screen.
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {

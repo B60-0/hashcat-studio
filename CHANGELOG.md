@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+Dark theme by default, a polished macOS installer, and a few bug fixes.
+
+- Added a full dark theme and made it the default; light theme is still available via a topbar toggle or the Appearance card in Settings.
+- Persisted the theme choice in both `localStorage` and the app settings file so it survives restarts.
+- Refreshed the entire UI: themed sidebar, topbar with contextual titles and a Hashcat version pill, glowing accents, gradient progress bar, animated running badge, themed scrollbars, and a brighter setup screen.
+- Replaced the bare `hdiutil` zip-style DMG with a designed installer: dark backdrop, Hashcat Studio logo, an arrow pointing from the app icon to the Applications symlink, and proper retina-aware backgrounds.
+- Fixed Setup so cancelling the folder picker no longer shows a phantom "Hashcat could not be validated" error.
+- Fixed the New Task algorithm search so the currently-selected algorithm stays in the dropdown even when filtered out.
+
 ## 0.2.1
 
 macOS setup and packaging fixes.

@@ -181,11 +181,12 @@ export namespace settings {
 	    outputDir: string;
 	    defaultStatusTimer: number;
 	    defaultWorkloadProfile: number;
-	
+	    theme: string;
+
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.hashcatBinaryPath = source["hashcatBinaryPath"];
@@ -198,6 +199,7 @@ export namespace settings {
 	        this.outputDir = source["outputDir"];
 	        this.defaultStatusTimer = source["defaultStatusTimer"];
 	        this.defaultWorkloadProfile = source["defaultWorkloadProfile"];
+	        this.theme = source["theme"];
 	    }
 	}
 

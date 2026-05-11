@@ -113,8 +113,15 @@ export const NewTask = () => {
     const entries = Object.entries(algorithms);
     if (!algoSearch) return entries;
     const q = algoSearch.toLowerCase();
-    return entries.filter(([id, name]) => id.includes(q) || (name as string).toLowerCase().includes(q));
-  }, [algorithms, algoSearch]);
+    const matches = entries.filter(([id, name]) => id.includes(q) || (name as string).toLowerCase().includes(q));
+    // Keep the currently-selected algorithm in the list so the <select> value stays in sync.
+    const currentId = String(config.HashMode);
+    if (!matches.some(([id]) => id === currentId)) {
+      const current = entries.find(([id]) => id === currentId);
+      if (current) matches.unshift(current);
+    }
+    return matches;
+  }, [algorithms, algoSearch, config.HashMode]);
 
   const handleChange = <K extends keyof TaskConfig>(field: K, value: TaskConfig[K]) => {
     setConfig(prev => ({ ...prev, [field]: value }));

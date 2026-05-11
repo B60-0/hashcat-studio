@@ -52,7 +52,7 @@ Download the latest build from [GitHub Releases](https://github.com/B60-0/hashca
 
 | Platform | What to download | Hashcat setup |
 | --- | --- | --- |
-| macOS | `Hashcat-Studio-macOS-*.zip` | Use setup, choose an existing install, or `brew install hashcat` |
+| macOS | `Hashcat-Studio-macOS-*.dmg` | Open the DMG and drag Hashcat Studio into Applications |
 | Windows | `Hashcat-Studio-Windows-*.zip` | Use setup or choose an existing `hashcat.exe` |
 | Linux | `Hashcat-Studio-Linux-*.tar.gz` | Use setup, choose an existing install, or use your package manager |
 

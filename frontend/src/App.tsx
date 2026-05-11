@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { NewTask } from "./pages/NewTask";
 import { Tasks } from "./pages/Tasks";
 import { Files } from "./pages/Files";
@@ -7,7 +8,8 @@ import { Devices } from "./pages/Devices";
 import { Settings } from "./pages/Settings";
 import { Setup } from "./pages/Setup";
 import { AnimatePresence } from "framer-motion";
-import { GetSetupState } from "../wailsjs/go/main/App";
+import { GetSettings, GetSetupState } from "../wailsjs/go/main/App";
+import { useTheme, type Theme } from "./theme";
 
 interface SetupState {
   required: boolean;
@@ -19,15 +21,36 @@ interface SetupState {
   error: string;
 }
 
+const PAGE_TITLES: Record<string, string> = {
+  "new-task": "Hashcat Studio",
+  tasks: "Tasks",
+  files: "Files",
+  devices: "Devices",
+  settings: "Settings",
+};
+
+const PAGE_SUBTITLES: Record<string, string> = {
+  "new-task": "A simple desktop GUI for authorized Hashcat sessions",
+  tasks: "Monitor and control active Hashcat sessions",
+  files: "Browse hashes, wordlists, rules, and masks",
+  devices: "OpenCL and CUDA backends",
+  settings: "Configure Hashcat binary, asset folders, and appearance",
+};
+
 function App() {
   const [activePage, setActivePage] = useState("new-task");
   const [setupState, setSetupState] = useState<SetupState | null>(null);
   const [setupLoading, setSetupLoading] = useState(true);
+  const { setTheme } = useTheme();
 
   const refreshSetupState = useCallback(async () => {
     try {
       if (window.go?.main?.App) {
-        setSetupState(await GetSetupState());
+        const [state, settings] = await Promise.all([GetSetupState(), GetSettings()]);
+        setSetupState(state);
+        if (settings?.theme === "light" || settings?.theme === "dark") {
+          setTheme(settings.theme as Theme);
+        }
       } else {
         setSetupState({ required: true, running: false, hashcatBinaryPath: "", hashcatInstallDir: "", valid: false, version: "", error: "" });
       }
@@ -37,7 +60,7 @@ function App() {
     } finally {
       setSetupLoading(false);
     }
-  }, []);
+  }, [setTheme]);
 
   useEffect(() => {
     refreshSetupState();
@@ -79,8 +102,16 @@ function App() {
       <main className="main-content">
         <div className="topbar">
           <div>
-            <span className="topbar-title">Hashcat Studio</span>
-            <span className="topbar-subtitle">A simple desktop GUI for authorized Hashcat sessions</span>
+            <span className="topbar-title">{PAGE_TITLES[activePage] ?? "Hashcat Studio"}</span>
+            <span className="topbar-subtitle">{PAGE_SUBTITLES[activePage] ?? ""}</span>
+          </div>
+          <div className="topbar-actions">
+            {setupState?.version && (
+              <span className="topbar-version" title={setupState.hashcatBinaryPath}>
+                {setupState.version.split("\n")[0]}
+              </span>
+            )}
+            <ThemeToggle />
           </div>
         </div>
         <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>

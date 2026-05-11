@@ -19,6 +19,7 @@ type Settings struct {
 	OutputDir              string `json:"outputDir"`
 	DefaultStatusTimer     int    `json:"defaultStatusTimer"`
 	DefaultWorkloadProfile int    `json:"defaultWorkloadProfile"`
+	Theme                  string `json:"theme"`
 }
 
 // SettingsManager handles application configuration and preferences.
@@ -56,6 +57,7 @@ func New() (*SettingsManager, error) {
 			OutputDir:              filepath.Join(appDir, "output"),
 			DefaultStatusTimer:     10,
 			DefaultWorkloadProfile: 2,
+			Theme:                  "dark",
 		},
 	}
 
@@ -96,6 +98,9 @@ func (sm *SettingsManager) applyDefaults() {
 	}
 	if sm.settings.DefaultWorkloadProfile == 0 {
 		sm.settings.DefaultWorkloadProfile = 2
+	}
+	if sm.settings.Theme != "light" && sm.settings.Theme != "dark" {
+		sm.settings.Theme = "dark"
 	}
 }
 

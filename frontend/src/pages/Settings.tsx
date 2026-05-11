@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, ShieldCheck, ShieldX, Loader2 } from 'lucide-react';
+import { Save, ShieldCheck, ShieldX, Loader2, Moon, Sun } from 'lucide-react';
 import { GetSettings, UpdateSettings, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
+import { useTheme, type Theme } from '../theme';
 
 interface SettingsData {
   hashcatBinaryPath: string;
@@ -14,6 +15,7 @@ interface SettingsData {
   outputDir: string;
   defaultStatusTimer: number;
   defaultWorkloadProfile: number;
+  theme: string;
 }
 
 interface ValidationInfo {
@@ -38,6 +40,12 @@ export const Settings = () => {
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [validating, setValidating] = useState(false);
   const [validation, setValidation] = useState<ValidationInfo | null>(null);
+  const { theme, setTheme } = useTheme();
+
+  const chooseTheme = (next: Theme) => {
+    setTheme(next);
+    if (settings) setSettings({ ...settings, theme: next });
+  };
 
   useEffect(() => {
     (async () => {
@@ -56,6 +64,7 @@ export const Settings = () => {
             outputDir: '~/.config/HashcatGUI/output',
             defaultStatusTimer: 10,
             defaultWorkloadProfile: 2,
+            theme: 'dark',
           });
         }
       } catch (err) { console.error(err); }
@@ -112,6 +121,25 @@ export const Settings = () => {
 
       {settings && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '720px' }}>
+
+          {/* Appearance */}
+          <div className="glass-card">
+            <div className="section-title">Appearance</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Theme</div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Dark by default — save to remember across launches.</div>
+              </div>
+              <div className="theme-toggle" role="group" aria-label="Theme">
+                <button type="button" className={theme === 'dark' ? 'active' : ''} onClick={() => chooseTheme('dark')} title="Dark">
+                  <Moon size={14} />
+                </button>
+                <button type="button" className={theme === 'light' ? 'active' : ''} onClick={() => chooseTheme('light')} title="Light">
+                  <Sun size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
 
           {/* Binary Path */}
           <div className="glass-card">
