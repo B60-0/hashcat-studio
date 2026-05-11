@@ -10,6 +10,8 @@ import (
 // Settings represents the application settings.
 type Settings struct {
 	HashcatBinaryPath      string `json:"hashcatBinaryPath"`
+	HashcatInstallDir      string `json:"hashcatInstallDir"`
+	SetupComplete          bool   `json:"setupComplete"`
 	HashesDir              string `json:"hashesDir"`
 	DictionariesDir        string `json:"dictionariesDir"`
 	RulesDir               string `json:"rulesDir"`
@@ -44,7 +46,9 @@ func New() (*SettingsManager, error) {
 		filePath: filepath.Join(appDir, "settings.json"),
 		appDir:   appDir,
 		settings: Settings{
-			HashcatBinaryPath:      "hashcat",
+			HashcatBinaryPath:      "",
+			HashcatInstallDir:      filepath.Join(appDir, "hashcat"),
+			SetupComplete:          false,
 			HashesDir:              filepath.Join(appDir, "hashes"),
 			DictionariesDir:        filepath.Join(appDir, "dictionaries"),
 			RulesDir:               filepath.Join(appDir, "rules"),
@@ -57,11 +61,42 @@ func New() (*SettingsManager, error) {
 
 	// Try loading existing settings
 	_ = sm.Load()
+	sm.applyDefaults()
 
 	// Ensure asset directories exist
 	_ = sm.EnsureDirectories()
 
 	return sm, nil
+}
+
+func (sm *SettingsManager) applyDefaults() {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	if sm.settings.HashcatInstallDir == "" {
+		sm.settings.HashcatInstallDir = filepath.Join(sm.appDir, "hashcat")
+	}
+	if sm.settings.HashesDir == "" {
+		sm.settings.HashesDir = filepath.Join(sm.appDir, "hashes")
+	}
+	if sm.settings.DictionariesDir == "" {
+		sm.settings.DictionariesDir = filepath.Join(sm.appDir, "dictionaries")
+	}
+	if sm.settings.RulesDir == "" {
+		sm.settings.RulesDir = filepath.Join(sm.appDir, "rules")
+	}
+	if sm.settings.MasksDir == "" {
+		sm.settings.MasksDir = filepath.Join(sm.appDir, "masks")
+	}
+	if sm.settings.OutputDir == "" {
+		sm.settings.OutputDir = filepath.Join(sm.appDir, "output")
+	}
+	if sm.settings.DefaultStatusTimer == 0 {
+		sm.settings.DefaultStatusTimer = 10
+	}
+	if sm.settings.DefaultWorkloadProfile == 0 {
+		sm.settings.DefaultWorkloadProfile = 2
+	}
 }
 
 // Load reads settings from the settings file.

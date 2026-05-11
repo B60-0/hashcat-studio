@@ -7,6 +7,7 @@ import (
 	"hashcat-studio/internal/hashcat"
 	"hashcat-studio/internal/settings"
 	"hashcat-studio/internal/tasks"
+	"sync"
 )
 
 // App struct
@@ -15,6 +16,8 @@ type App struct {
 	settingsManager *settings.SettingsManager
 	assetManager    *assets.AssetManager
 	taskManager     *tasks.TaskManager
+	setupMu         sync.Mutex
+	setupRunning    bool
 }
 
 // NewApp creates a new App application struct

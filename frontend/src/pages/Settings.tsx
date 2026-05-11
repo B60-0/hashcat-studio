@@ -5,6 +5,8 @@ import { GetSettings, UpdateSettings, ValidateHashcatBinary } from '../../wailsj
 
 interface SettingsData {
   hashcatBinaryPath: string;
+  hashcatInstallDir: string;
+  setupComplete: boolean;
   hashesDir: string;
   dictionariesDir: string;
   rulesDir: string;
@@ -45,6 +47,8 @@ export const Settings = () => {
         } else {
           setSettings({
             hashcatBinaryPath: '/usr/local/bin/hashcat',
+            hashcatInstallDir: '~/.config/HashcatStudio/hashcat',
+            setupComplete: true,
             hashesDir: '~/.config/HashcatGUI/hashes',
             dictionariesDir: '~/.config/HashcatGUI/dictionaries',
             rulesDir: '~/.config/HashcatGUI/rules',

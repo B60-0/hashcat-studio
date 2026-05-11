@@ -141,6 +141,30 @@ export namespace main {
 	        this.masks = source["masks"];
 	    }
 	}
+	export class SetupState {
+	    required: boolean;
+	    running: boolean;
+	    hashcatBinaryPath: string;
+	    hashcatInstallDir: string;
+	    valid: boolean;
+	    version: string;
+	    error: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetupState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.required = source["required"];
+	        this.running = source["running"];
+	        this.hashcatBinaryPath = source["hashcatBinaryPath"];
+	        this.hashcatInstallDir = source["hashcatInstallDir"];
+	        this.valid = source["valid"];
+	        this.version = source["version"];
+	        this.error = source["error"];
+	    }
+	}
 
 }
 
@@ -148,6 +172,8 @@ export namespace settings {
 	
 	export class Settings {
 	    hashcatBinaryPath: string;
+	    hashcatInstallDir: string;
+	    setupComplete: boolean;
 	    hashesDir: string;
 	    dictionariesDir: string;
 	    rulesDir: string;
@@ -163,6 +189,8 @@ export namespace settings {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.hashcatBinaryPath = source["hashcatBinaryPath"];
+	        this.hashcatInstallDir = source["hashcatInstallDir"];
+	        this.setupComplete = source["setupComplete"];
 	        this.hashesDir = source["hashesDir"];
 	        this.dictionariesDir = source["dictionariesDir"];
 	        this.rulesDir = source["rulesDir"];

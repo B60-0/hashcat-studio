@@ -17,6 +17,8 @@ export function GetDevices():Promise<string>;
 
 export function GetSettings():Promise<settings.Settings>;
 
+export function GetSetupState():Promise<main.SetupState>;
+
 export function ListTasks():Promise<Array<tasks.TaskInfo>>;
 
 export function PauseTask(arg1:string):Promise<void>;
@@ -31,10 +33,18 @@ export function RunBenchmark(arg1:number):Promise<string>;
 
 export function ScanAssets():Promise<main.ScannedAssets>;
 
+export function SelectHashcatBinary():Promise<main.SetupState>;
+
+export function SelectHashcatDirectory():Promise<main.SetupState>;
+
 export function SkipTask(arg1:string):Promise<void>;
+
+export function StartHashcatDownload():Promise<void>;
 
 export function StartTask(arg1:string):Promise<void>;
 
 export function UpdateSettings(arg1:settings.Settings):Promise<void>;
+
+export function UseSystemHashcat():Promise<main.SetupState>;
 
 export function ValidateHashcatBinary(arg1:string):Promise<hashcat.HashcatBinaryInfo>;

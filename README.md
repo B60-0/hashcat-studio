@@ -32,7 +32,7 @@
 
 <br>
 
-> Hashcat Studio does not include Hashcat. Install Hashcat separately, then point the app to your local `hashcat` binary.
+> Hashcat Studio can use your existing Hashcat install or download the latest official Hashcat release during first-run setup.
 
 > Use this only for systems, hashes, and audits you are allowed to test.
 
@@ -50,13 +50,13 @@
 
 Download the latest build from [GitHub Releases](https://github.com/B60-0/hashcat-studio/releases/latest).
 
-| Platform | What to download | Hashcat install |
+| Platform | What to download | Hashcat setup |
 | --- | --- | --- |
-| macOS | `Hashcat-Studio-macOS-*.zip` | `brew install hashcat` |
-| Windows | `Hashcat-Studio-Windows-*.zip` | Download Hashcat from [hashcat.net](https://hashcat.net/hashcat/) |
-| Linux | `Hashcat-Studio-Linux-*.tar.gz` | Use your package manager or [hashcat.net](https://hashcat.net/hashcat/) |
+| macOS | `Hashcat-Studio-macOS-*.zip` | Use setup, choose an existing install, or `brew install hashcat` |
+| Windows | `Hashcat-Studio-Windows-*.zip` | Use setup or choose an existing `hashcat.exe` |
+| Linux | `Hashcat-Studio-Linux-*.tar.gz` | Use setup, choose an existing install, or use your package manager |
 
-After opening the app, go to **Settings** and choose your Hashcat binary.
+On first launch, Hashcat Studio opens a setup flow. You can download Hashcat from inside the app, choose a Hashcat folder, choose a single binary, or use `hashcat` from your PATH.
 
 Common paths:
 
@@ -69,10 +69,10 @@ Windows:             C:\path\to\hashcat.exe
 
 ## First Run
 
-1. Install Hashcat.
-2. Download Hashcat Studio for your OS.
-3. Open **Settings**.
-4. Set the Hashcat binary path.
+1. Download Hashcat Studio for your OS.
+2. Open the app.
+3. Pick **Download Hashcat**, **Choose Folder**, **Choose Binary**, or **Use `hashcat` from PATH**.
+4. Let setup validate Hashcat.
 5. Add your hash and wordlist files.
 6. Create a task and preview the command.
 7. Start the task when everything looks right.

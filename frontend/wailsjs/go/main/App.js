@@ -26,6 +26,10 @@ export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }
 
+export function GetSetupState() {
+  return window['go']['main']['App']['GetSetupState']();
+}
+
 export function ListTasks() {
   return window['go']['main']['App']['ListTasks']();
 }
@@ -54,8 +58,20 @@ export function ScanAssets() {
   return window['go']['main']['App']['ScanAssets']();
 }
 
+export function SelectHashcatBinary() {
+  return window['go']['main']['App']['SelectHashcatBinary']();
+}
+
+export function SelectHashcatDirectory() {
+  return window['go']['main']['App']['SelectHashcatDirectory']();
+}
+
 export function SkipTask(arg1) {
   return window['go']['main']['App']['SkipTask'](arg1);
+}
+
+export function StartHashcatDownload() {
+  return window['go']['main']['App']['StartHashcatDownload']();
 }
 
 export function StartTask(arg1) {
@@ -64,6 +80,10 @@ export function StartTask(arg1) {
 
 export function UpdateSettings(arg1) {
   return window['go']['main']['App']['UpdateSettings'](arg1);
+}
+
+export function UseSystemHashcat() {
+  return window['go']['main']['App']['UseSystemHashcat']();
 }
 
 export function ValidateHashcatBinary(arg1) {
