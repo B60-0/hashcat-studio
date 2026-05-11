@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     name: Build ${{ matrix.name }}
@@ -21,7 +24,7 @@ jobs:
             artifact: hashcat-studio-macos
             binary: build/bin/hashcat-studio.app
           - name: linux
-            os: ubuntu-latest
+            os: ubuntu-22.04
             artifact: hashcat-studio-linux
             binary: build/bin/hashcat-studio
           - name: windows
@@ -37,7 +40,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -82,3 +85,4 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+          overwrite_files: true
