@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,9 +9,11 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bodgit/sevenzip"
@@ -155,6 +158,10 @@ func (a *App) StartHashcatDownload() error {
 }
 
 func (a *App) installHashcat() error {
+	if runtime.GOOS == "darwin" {
+		return a.installHashcatWithHomebrew()
+	}
+
 	s := a.settingsManager.Get()
 	installDir := s.HashcatInstallDir
 	if installDir == "" {
@@ -228,6 +235,118 @@ func (a *App) installHashcat() error {
 		Finished:          true,
 		HashcatBinaryPath: state.HashcatBinaryPath,
 	})
+	return nil
+}
+
+func (a *App) installHashcatWithHomebrew() error {
+	a.emitSetup(SetupProgress{
+		Percent: 6,
+		Step:    "Checking macOS",
+		Message: "Looking for Homebrew and Hashcat.",
+		Log:     "$ which hashcat",
+	})
+
+	for _, path := range []string{"/opt/homebrew/bin/hashcat", "/usr/local/bin/hashcat"} {
+		if info := hashcat.ValidateHashcatBinary(path); info.Valid {
+			state, err := a.completeSetupWithBinary(path)
+			if err != nil {
+				return err
+			}
+			a.emitSetup(SetupProgress{
+				Percent:           100,
+				Step:              "Ready",
+				Message:           "Hashcat is installed and ready.",
+				Log:               fmt.Sprintf("[done] %s", state.Version),
+				Finished:          true,
+				HashcatBinaryPath: state.HashcatBinaryPath,
+			})
+			return nil
+		}
+	}
+
+	brew, err := findHomebrew()
+	if err != nil {
+		return errors.New("Homebrew was not found. Install Homebrew from https://brew.sh, then reopen Hashcat Studio or use the existing-install link")
+	}
+
+	a.emitSetup(SetupProgress{
+		Percent: 15,
+		Step:    "Installing Hashcat",
+		Message: "Installing Hashcat with Homebrew.",
+		Log:     fmt.Sprintf("$ %s install hashcat", brew),
+	})
+
+	if err := a.runSetupCommand(15, 88, brew, "install", "hashcat"); err != nil {
+		return err
+	}
+
+	a.emitSetup(SetupProgress{
+		Percent: 92,
+		Step:    "Validating install",
+		Message: "Running hashcat --version.",
+		Log:     "$ hashcat --version",
+	})
+
+	for _, path := range []string{"/opt/homebrew/bin/hashcat", "/usr/local/bin/hashcat"} {
+		if info := hashcat.ValidateHashcatBinary(path); info.Valid {
+			state, err := a.completeSetupWithBinary(path)
+			if err != nil {
+				return err
+			}
+			a.emitSetup(SetupProgress{
+				Percent:           100,
+				Step:              "Ready",
+				Message:           "Hashcat is installed and ready.",
+				Log:               fmt.Sprintf("[done] %s", state.Version),
+				Finished:          true,
+				HashcatBinaryPath: state.HashcatBinaryPath,
+			})
+			return nil
+		}
+	}
+
+	return errors.New("Homebrew finished, but Hashcat could not be found in /opt/homebrew/bin or /usr/local/bin")
+}
+
+func (a *App) runSetupCommand(startPercent int, endPercent int, name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	var wg sync.WaitGroup
+	var countMu sync.Mutex
+	lineCount := 0
+	emitLine := func(source string, line string) {
+		countMu.Lock()
+		lineCount++
+		next := startPercent + min(lineCount, 60)*(endPercent-startPercent)/60
+		countMu.Unlock()
+		a.emitSetup(SetupProgress{
+			Percent: next,
+			Step:    "Installing Hashcat",
+			Message: "Homebrew is installing Hashcat and its dependencies.",
+			Log:     fmt.Sprintf("[%s] %s", source, line),
+		})
+	}
+
+	wg.Add(2)
+	go scanCommandOutput(&wg, stdout, "brew", emitLine)
+	go scanCommandOutput(&wg, stderr, "brew", emitLine)
+	wg.Wait()
+
+	if err := cmd.Wait(); err != nil {
+		return fmt.Errorf("Homebrew install failed: %w", err)
+	}
 	return nil
 }
 
@@ -442,10 +561,14 @@ func findHashcatBinary(root string) (string, error) {
 }
 
 func candidateBinaryNames() []string {
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		return []string{"hashcat.exe", "hashcat64.exe"}
+	case "darwin":
+		return []string{"hashcat"}
+	default:
+		return []string{"hashcat", "hashcat.bin"}
 	}
-	return []string{"hashcat", "hashcat.bin"}
 }
 
 func executableDialogPattern() string {
@@ -493,4 +616,27 @@ func byteCount(n int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %ciB", float64(n)/float64(div), "KMGTPE"[exp])
+}
+
+func findHomebrew() (string, error) {
+	for _, path := range []string{"/opt/homebrew/bin/brew", "/usr/local/bin/brew"} {
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
+	}
+	if path, err := exec.LookPath("brew"); err == nil {
+		return path, nil
+	}
+	return "", errors.New("brew not found")
+}
+
+func scanCommandOutput(wg *sync.WaitGroup, reader io.Reader, source string, emit func(string, string)) {
+	defer wg.Done()
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" {
+			emit(source, line)
+		}
+	}
 }

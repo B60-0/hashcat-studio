@@ -63,15 +63,24 @@ jobs:
       - name: Build app
         run: wails build -clean
 
+      - name: Package macOS DMG
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist dmgroot
+          cp -R "${{ matrix.binary }}" dmgroot/
+          ln -s /Applications dmgroot/Applications
+          hdiutil create \
+            -volname "Hashcat Studio" \
+            -srcfolder dmgroot \
+            -ov \
+            -format UDZO \
+            "dist/${{ matrix.artifact }}.dmg"
+
       - name: Package Unix build
-        if: runner.os != 'Windows'
+        if: runner.os == 'Linux'
         run: |
           mkdir -p dist
-          if [ -d "${{ matrix.binary }}" ]; then
-            ditto -c -k --sequesterRsrc --keepParent "${{ matrix.binary }}" "dist/${{ matrix.artifact }}.zip"
-          else
-            tar -czf "dist/${{ matrix.artifact }}.tar.gz" -C build/bin "$(basename "${{ matrix.binary }}")"
-          fi
+          tar -czf "dist/${{ matrix.artifact }}.tar.gz" -C build/bin "$(basename "${{ matrix.binary }}")"
 
       - name: Package Windows build
         if: runner.os == 'Windows'

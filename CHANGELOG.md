@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.1
+
+macOS setup and packaging fixes.
+
+- Fixed macOS setup selecting a non-macOS `hashcat.bin` from the official archive.
+- Added macOS Hashcat installation through Homebrew when using Download Hashcat.
+- Made setup terminal output more visible by reducing the background darkening.
+- Removed the harsh hover effect around the Get Started and Download Hashcat buttons.
+- Changed macOS release packaging from a zip archive to a drag-to-Applications DMG.
+
 ## 0.2.0
 
 First-run setup and README refresh.
