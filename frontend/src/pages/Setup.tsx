@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Download, FolderOpen, HardDrive, Loader2, Terminal } from 'lucide-react';
+import { Check, Download, Loader2, Terminal } from 'lucide-react';
 import logo from '../assets/hashcat-logo.png';
 import {
-  SelectHashcatBinary,
   SelectHashcatDirectory,
   StartHashcatDownload,
-  UseSystemHashcat,
 } from '../../wailsjs/go/main/App';
 import { EventsOff, EventsOn } from '../../wailsjs/runtime/runtime';
 
@@ -87,15 +85,11 @@ export const Setup = ({ initialState, onComplete }: SetupProps) => {
     };
   }, [onComplete]);
 
-  const finishWithExisting = async (action: 'binary' | 'directory' | 'system') => {
+  const finishWithExisting = async () => {
     setError(null);
-    setBusyAction(action);
+    setBusyAction('directory');
     try {
-      const state = action === 'binary'
-        ? await SelectHashcatBinary()
-        : action === 'directory'
-          ? await SelectHashcatDirectory()
-          : await UseSystemHashcat();
+      const state = await SelectHashcatDirectory();
 
       if (state.valid) {
         setProgress({
@@ -182,23 +176,15 @@ export const Setup = ({ initialState, onComplete }: SetupProps) => {
           >
             <img className="setup-logo" src={logo} alt="Hashcat Studio" />
             <h1>Set up Hashcat</h1>
-            <p>Use an existing install or let Hashcat Studio download the latest release.</p>
+            <p>Download the latest official Hashcat release and let Hashcat Studio configure it for you.</p>
 
             <div className="setup-actions">
               <button className="setup-action setup-action-main" onClick={startDownload} disabled={!!busyAction}>
                 {busyAction === 'download' ? <Loader2 className="spinning" size={18} /> : <Download size={18} />}
                 Download Hashcat
               </button>
-              <button className="setup-action" onClick={() => finishWithExisting('directory')} disabled={!!busyAction}>
-                {busyAction === 'directory' ? <Loader2 className="spinning" size={18} /> : <FolderOpen size={18} />}
-                Choose Folder
-              </button>
-              <button className="setup-action" onClick={() => finishWithExisting('binary')} disabled={!!busyAction}>
-                {busyAction === 'binary' ? <Loader2 className="spinning" size={18} /> : <HardDrive size={18} />}
-                Choose Binary
-              </button>
-              <button className="setup-link-button" onClick={() => finishWithExisting('system')} disabled={!!busyAction}>
-                Use `hashcat` from PATH
+              <button className="setup-link-button" onClick={finishWithExisting} disabled={!!busyAction}>
+                {busyAction === 'directory' ? 'Opening folder picker...' : 'Point to an already installed Hashcat folder'}
               </button>
             </div>
 
