@@ -1,65 +1,109 @@
-# Hashcat Studio
+<p align="center">
+  <img src="frontend/public/hashcat-logo.png" alt="Hashcat Studio logo" width="96">
+</p>
 
-Hashcat Studio is a simple desktop interface for running authorized Hashcat sessions. It gives you a clean way to choose a Hashcat binary, organize hashes and wordlists, build dictionary or mask attacks, preview the command, and monitor task output without living in a terminal.
+<h1 align="center">Hashcat Studio</h1>
 
-It does not bundle Hashcat. You install Hashcat separately, then point the app to your local binary.
+<p align="center">
+  A clean desktop GUI for authorized Hashcat work.
+</p>
+
+<p align="center">
+  <a href="https://github.com/B60-0/hashcat-studio/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/B60-0/hashcat-studio?style=for-the-badge&color=111111"></a>
+  <a href="https://github.com/B60-0/hashcat-studio/actions"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/B60-0/hashcat-studio/ci.yml?style=for-the-badge&label=CI&color=111111"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-111111?style=for-the-badge"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/B60-0/hashcat-studio/releases/latest"><strong>Download</strong></a>
+  ·
+  <a href="docs/wiki/Home.md"><strong>Docs</strong></a>
+  ·
+  <a href="CONTRIBUTING.md"><strong>Contribute</strong></a>
+  ·
+  <a href="SECURITY.md"><strong>Security</strong></a>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="docs/assets/readme-preview.svg" alt="Hashcat Studio app preview" width="820">
+</p>
+
+<br>
+
+> Hashcat Studio does not include Hashcat. Install Hashcat separately, then point the app to your local `hashcat` binary.
 
 > Use this only for systems, hashes, and audits you are allowed to test.
 
-## Features
+## At A Glance
 
-- Dictionary and mask attack setup
-- Hashcat command preview before launch
-- Task list with live stdout/stderr logs
-- Pause, resume, checkpoint, skip, and quit controls
-- Asset folders for hashes, dictionaries, rules, masks, and outputs
-- Hashcat binary validation and algorithm loading
-- Device info via `hashcat -I`
-- Benchmarks by hash mode
-- Cross-platform desktop build with Wails
+| Build Tasks | Preview Commands | Watch Output |
+| --- | --- | --- |
+| Create dictionary and mask attacks without hand-writing every flag. | See the generated Hashcat command before it runs. | Follow stdout, stderr, status, and task state from the app. |
+
+| Manage Files | Choose Devices | Stay Local |
+| --- | --- | --- |
+| Keep hashes, wordlists, rules, masks, and outputs organized. | Load device info and benchmark supported hash modes. | Runs your installed Hashcat binary on your machine. |
 
 ## Install
 
-Download the latest release for your OS from the GitHub Releases page.
+Download the latest build from [GitHub Releases](https://github.com/B60-0/hashcat-studio/releases/latest).
 
-### macOS
+| Platform | What to download | Hashcat install |
+| --- | --- | --- |
+| macOS | `Hashcat-Studio-macOS-*.zip` | `brew install hashcat` |
+| Windows | `Hashcat-Studio-Windows-*.zip` | Download Hashcat from [hashcat.net](https://hashcat.net/hashcat/) |
+| Linux | `Hashcat-Studio-Linux-*.tar.gz` | Use your package manager or [hashcat.net](https://hashcat.net/hashcat/) |
 
-1. Install Hashcat:
-   ```bash
-   brew install hashcat
-   ```
-2. Download the macOS release archive.
-3. Open Hashcat Studio.
-4. In Settings, set the Hashcat binary path. Apple Silicon Homebrew usually installs it at:
-   ```text
-   /opt/homebrew/bin/hashcat
-   ```
+After opening the app, go to **Settings** and choose your Hashcat binary.
 
-### Windows
+Common paths:
 
-1. Install Hashcat from [hashcat.net](https://hashcat.net/hashcat/).
-2. Download the Windows release archive.
-3. Run `hashcat-studio.exe`.
-4. In Settings, set the path to `hashcat.exe`.
+```text
+macOS Apple Silicon: /opt/homebrew/bin/hashcat
+macOS Intel:         /usr/local/bin/hashcat
+Linux:               /usr/bin/hashcat
+Windows:             C:\path\to\hashcat.exe
+```
 
-### Linux
+## First Run
 
-1. Install Hashcat with your package manager or from [hashcat.net](https://hashcat.net/hashcat/).
-2. Download the Linux release archive.
-3. Make the binary executable if needed:
-   ```bash
-   chmod +x hashcat-studio
-   ```
-4. Run it and set the Hashcat binary path in Settings.
+1. Install Hashcat.
+2. Download Hashcat Studio for your OS.
+3. Open **Settings**.
+4. Set the Hashcat binary path.
+5. Add your hash and wordlist files.
+6. Create a task and preview the command.
+7. Start the task when everything looks right.
 
-## Build From Source
+<br>
+
+## Features
+
+| Tasks | Files | Hashcat |
+| --- | --- | --- |
+| Dictionary attacks | Hash folders | Binary validation |
+| Mask attacks | Wordlist folders | Algorithm loading |
+| Live logs | Rule folders | Device info |
+| Pause and resume | Mask folders | Benchmarks |
+| Checkpoint and skip | Output folders | Command previews |
+
+<br>
+
+<details>
+<summary><strong>Build from source</strong></summary>
+
+<br>
 
 Requirements:
 
-- Go 1.22+
-- Node.js 20+
-- Wails CLI
-- Hashcat
+| Tool | Version |
+| --- | --- |
+| Go | 1.22+ |
+| Node.js | 20+ |
+| Wails CLI | 2.12.0 |
+| Hashcat | Your local install |
 
 Install Wails:
 
@@ -67,7 +111,7 @@ Install Wails:
 go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 ```
 
-Build:
+Build the app:
 
 ```bash
 npm --prefix frontend install
@@ -78,7 +122,14 @@ wails build
 
 The desktop binary is written to `build/bin/`.
 
-## Development
+</details>
+
+<details>
+<summary><strong>Development</strong></summary>
+
+<br>
+
+Start the app in development mode:
 
 ```bash
 npm --prefix frontend install
@@ -93,19 +144,39 @@ npm --prefix frontend run lint
 npm --prefix frontend run build
 ```
 
-## Project Layout
+</details>
+
+<details>
+<summary><strong>Project layout</strong></summary>
+
+<br>
 
 ```text
 internal/hashcat   Hashcat argument building and binary helpers
-internal/tasks     task manager and subprocess streaming
-internal/assets    asset folder scanner
-internal/settings  app settings and folders
+internal/tasks     Task manager and subprocess streaming
+internal/assets    Asset folder scanner
+internal/settings  App settings and folders
 frontend/src       React UI
 docs/wiki          GitHub wiki source pages
 ```
+
+</details>
+
+<br>
+
+## Docs
+
+The wiki pages live in `docs/wiki` so they can be reviewed with the rest of the source:
+
+- [Installation](docs/wiki/Installation.md)
+- [First Run](docs/wiki/First-Run.md)
+- [Creating Tasks](docs/wiki/Creating-Tasks.md)
+- [Files And Folders](docs/wiki/Files-And-Folders.md)
+- [Troubleshooting](docs/wiki/Troubleshooting.md)
+- [Responsible Use](docs/wiki/Responsible-Use.md)
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
 
-Hashcat Studio is not affiliated with the Hashcat project. Hashcat is installed separately by the user.
+Hashcat Studio is not affiliated with the Hashcat project.

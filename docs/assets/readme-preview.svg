@@ -1,0 +1,48 @@
+<svg width="960" height="560" viewBox="0 0 960 560" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hashcat Studio desktop app preview">
+  <rect width="960" height="560" rx="22" fill="#f6f6f3"/>
+  <rect x="24" y="24" width="912" height="512" rx="18" fill="#ffffff" stroke="#d8d8d2"/>
+  <rect x="24" y="24" width="206" height="512" rx="18" fill="#0b0b0b"/>
+  <path d="M230 24V536" stroke="#d8d8d2"/>
+
+  <circle cx="62" cy="67" r="22" fill="#ffffff"/>
+  <text x="96" y="64" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Hashcat</text>
+  <text x="96" y="84" fill="#b8b8b8" font-family="Inter, Arial, sans-serif" font-size="13">Studio</text>
+
+  <rect x="44" y="126" width="162" height="38" rx="8" fill="#ffffff"/>
+  <text x="72" y="150" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">New Task</text>
+  <text x="72" y="200" fill="#cfcfcf" font-family="Inter, Arial, sans-serif" font-size="14">Tasks</text>
+  <text x="72" y="246" fill="#cfcfcf" font-family="Inter, Arial, sans-serif" font-size="14">Files</text>
+  <text x="72" y="292" fill="#cfcfcf" font-family="Inter, Arial, sans-serif" font-size="14">Devices</text>
+  <text x="72" y="338" fill="#cfcfcf" font-family="Inter, Arial, sans-serif" font-size="14">Settings</text>
+
+  <text x="270" y="74" fill="#0a0a0a" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800">New Task</text>
+  <text x="270" y="101" fill="#686864" font-family="Inter, Arial, sans-serif" font-size="15">Build, review, and launch authorized Hashcat sessions.</text>
+
+  <rect x="270" y="136" width="292" height="94" rx="12" fill="#fbfbf9" stroke="#deded8"/>
+  <text x="292" y="169" fill="#0a0a0a" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Attack Type</text>
+  <rect x="292" y="187" width="112" height="28" rx="7" fill="#111111"/>
+  <text x="317" y="206" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700">Dictionary</text>
+  <rect x="414" y="187" width="84" height="28" rx="7" fill="#ffffff" stroke="#d8d8d2"/>
+  <text x="441" y="206" fill="#222222" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700">Mask</text>
+
+  <rect x="586" y="136" width="292" height="94" rx="12" fill="#fbfbf9" stroke="#deded8"/>
+  <text x="608" y="169" fill="#0a0a0a" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Hash Mode</text>
+  <rect x="608" y="187" width="224" height="28" rx="7" fill="#ffffff" stroke="#d8d8d2"/>
+  <text x="622" y="206" fill="#444440" font-family="JetBrains Mono, monospace" font-size="12">0 - MD5</text>
+
+  <rect x="270" y="254" width="608" height="116" rx="12" fill="#fbfbf9" stroke="#deded8"/>
+  <text x="292" y="287" fill="#0a0a0a" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Inputs</text>
+  <rect x="292" y="306" width="264" height="38" rx="8" fill="#ffffff" stroke="#d8d8d2"/>
+  <text x="310" y="330" fill="#555550" font-family="Inter, Arial, sans-serif" font-size="13">hashes/client-a.txt</text>
+  <rect x="574" y="306" width="264" height="38" rx="8" fill="#ffffff" stroke="#d8d8d2"/>
+  <text x="592" y="330" fill="#555550" font-family="Inter, Arial, sans-serif" font-size="13">wordlists/audit.txt</text>
+
+  <rect x="270" y="394" width="608" height="84" rx="12" fill="#101010"/>
+  <text x="292" y="426" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Command Preview</text>
+  <text x="292" y="455" fill="#d8d8d8" font-family="JetBrains Mono, monospace" font-size="13">hashcat -m 0 -a 0 hashes/client-a.txt wordlists/audit.txt</text>
+
+  <rect x="694" y="62" width="86" height="34" rx="8" fill="#ffffff" stroke="#d8d8d2"/>
+  <text x="719" y="84" fill="#111111" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Save</text>
+  <rect x="790" y="62" width="88" height="34" rx="8" fill="#111111"/>
+  <text x="816" y="84" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Start</text>
+</svg>
