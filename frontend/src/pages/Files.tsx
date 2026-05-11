@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCw, File, FolderOpen } from 'lucide-react';
+import { ScanAssets } from '../../wailsjs/go/main/App';
 
 interface ScannedAssets {
   hashes: string[];
@@ -23,9 +24,8 @@ export const Files = () => {
   const scan = async () => {
     setLoading(true);
     try {
-      const app = (window as any).go?.main?.App;
-      if (app?.ScanAssets) {
-        setAssets(await app.ScanAssets());
+      if (window.go?.main?.App) {
+        setAssets(await ScanAssets());
       } else {
         await new Promise(r => setTimeout(r, 600));
         setAssets({
@@ -100,8 +100,8 @@ export const Files = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', maxWidth: '900px' }}>
-        {assets ? Object.entries(CATEGORY_META).map(([key]) => (
-          <AssetSection key={key} category={key} items={(assets as any)[key] || []} />
+        {assets ? Object.keys(CATEGORY_META).map((key) => (
+          <AssetSection key={key} category={key} items={assets[key as keyof ScannedAssets] || []} />
         )) : (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
             <span className="spinner" style={{ margin: '0 auto 1rem' }} />

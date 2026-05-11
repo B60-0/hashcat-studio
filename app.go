@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"hashcat-gui/internal/assets"
-	"hashcat-gui/internal/hashcat"
-	"hashcat-gui/internal/settings"
-	"hashcat-gui/internal/tasks"
+	"hashcat-studio/internal/assets"
+	"hashcat-studio/internal/hashcat"
+	"hashcat-studio/internal/settings"
+	"hashcat-studio/internal/tasks"
 )
 
 // App struct

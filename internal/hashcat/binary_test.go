@@ -86,3 +86,40 @@ fi
 		t.Errorf("Expected benchmark output, got %s", bench)
 	}
 }
+
+func TestMockedBinary_HashInfoBlockFormat(t *testing.T) {
+	tempDir := t.TempDir()
+	mockBin := filepath.Join(tempDir, "mock_hashcat_block")
+
+	mockScript := `#!/bin/sh
+if [ "$1" = "--version" ]; then
+	echo "v7.1.2"
+elif [ "$1" = "--hash-info" ]; then
+	echo "Hash Info:"
+	echo "=========="
+	echo ""
+	echo "Hash mode #0"
+	echo "  Name................: MD5"
+	echo "  Category............: Raw Hash"
+	echo ""
+	echo "Hash mode #1000"
+	echo "  Name................: NTLM"
+	echo "  Category............: Operating System"
+fi
+`
+	err := os.WriteFile(mockBin, []byte(mockScript), 0755)
+	if err != nil {
+		t.Fatalf("Failed to write mock binary: %v", err)
+	}
+
+	info := ValidateHashcatBinary(mockBin)
+	if !info.Valid {
+		t.Fatalf("Expected valid binary, got error: %s", info.Error)
+	}
+	if info.Algorithms[0] != "MD5" {
+		t.Errorf("Expected mode 0 to be MD5, got %s", info.Algorithms[0])
+	}
+	if info.Algorithms[1000] != "NTLM" {
+		t.Errorf("Expected mode 1000 to be NTLM, got %s", info.Algorithms[1000])
+	}
+}

@@ -1,6 +1,6 @@
 {
-  "name": "hashcat-gui",
-  "outputfilename": "hashcat-gui",
+  "name": "hashcat-studio",
+  "outputfilename": "hashcat-studio",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
@@ -10,10 +10,10 @@
     "email": "jashi@example.com"
   },
   "info": {
-    "companyName": "Hashcat GUI",
-    "productName": "hashcat-gui",
-    "productVersion": "1.0.0",
+    "companyName": "Hashcat Studio",
+    "productName": "Hashcat Studio",
+    "productVersion": "0.1.0",
     "copyright": "Copyright 2026",
-    "comments": "A modern Hashcat desktop application"
+    "comments": "A simple desktop interface for authorized Hashcat sessions"
   }
 }

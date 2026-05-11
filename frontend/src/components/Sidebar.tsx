@@ -6,6 +6,7 @@ import {
   Settings,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import logo from "../assets/hashcat-logo.png";
 
 interface SidebarProps {
   activePage: string;
@@ -27,8 +28,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <nav className="sidebar">
       <div className="sidebar-header">
-        <div className="logo-icon">#</div>
-        <span>Hashcat GUI</span>
+        <img className="logo-image" src={logo} alt="Hashcat logo" />
+        <span>Hashcat Studio</span>
       </div>
 
       <div className="sidebar-nav">

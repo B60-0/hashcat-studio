@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
+	"sync/atomic"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type TaskManager struct {
 	mu       sync.Mutex
+	nextID   uint64
 	tasks    map[string]*Task
 	wailsCtx context.Context
 }
@@ -34,7 +35,7 @@ func (m *TaskManager) emitUpdate(taskID string) {
 	m.mu.Lock()
 	t, ok := m.tasks[taskID]
 	m.mu.Unlock()
-	
+
 	if ok {
 		runtime.EventsEmit(m.wailsCtx, "task:info", t.ToInfo())
 	}
@@ -44,7 +45,7 @@ func (m *TaskManager) CreateTask(binaryPath string, args []string) (string, erro
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	id := fmt.Sprintf("Task-%d", time.Now().Unix())
+	id := fmt.Sprintf("Task-%d", atomic.AddUint64(&m.nextID, 1))
 	t := NewTask(id, binaryPath, args, m)
 	m.tasks[id] = t
 
@@ -131,7 +132,8 @@ func (m *TaskManager) DeleteTask(id string) error {
 		return fmt.Errorf("task not found")
 	}
 
-	if t.State == "Running" || t.State == "Paused" {
+	state := t.getState()
+	if state == "Running" || state == "Paused" {
 		return fmt.Errorf("task is active, quit it first")
 	}
 

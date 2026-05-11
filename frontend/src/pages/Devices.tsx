@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Cpu, Gauge, RefreshCw } from 'lucide-react';
+import { GetDevices, RunBenchmark } from '../../wailsjs/go/main/App';
 
 export const Devices = () => {
   const [deviceOutput, setDeviceOutput] = useState('');
@@ -12,9 +13,8 @@ export const Devices = () => {
   const fetchDevices = async () => {
     setLoadingDevices(true);
     try {
-      const app = (window as any).go?.main?.App;
-      if (app?.GetDevices) {
-        setDeviceOutput(await app.GetDevices());
+      if (window.go?.main?.App) {
+        setDeviceOutput(await GetDevices());
       } else {
         await new Promise(r => setTimeout(r, 600));
         setDeviceOutput(
@@ -25,8 +25,8 @@ export const Devices = () => {
           "* Device #2: NVIDIA GeForce RTX 3080, skipped"
         );
       }
-    } catch (err: any) {
-      setDeviceOutput(`Error: ${err.message || err}`);
+    } catch (err: unknown) {
+      setDeviceOutput(`Error: ${err instanceof Error ? err.message : String(err)}`);
     }
     setLoadingDevices(false);
   };
@@ -39,9 +39,8 @@ export const Devices = () => {
     setRunning(true);
     setBenchmarkOutput('');
     try {
-      const app = (window as any).go?.main?.App;
-      if (app?.RunBenchmark) {
-        setBenchmarkOutput(await app.RunBenchmark(mode));
+      if (window.go?.main?.App) {
+        setBenchmarkOutput(await RunBenchmark(mode));
       } else {
         await new Promise(r => setTimeout(r, 1200));
         setBenchmarkOutput(
@@ -51,8 +50,8 @@ export const Devices = () => {
           "Speed.#1.........:  62157.1 MH/s (51.88ms) @ Accel:256 Loops:1024 Thr:256 Vec:8"
         );
       }
-    } catch (err: any) {
-      setBenchmarkOutput(`Benchmark failed: ${err.message || err}`);
+    } catch (err: unknown) {
+      setBenchmarkOutput(`Benchmark failed: ${err instanceof Error ? err.message : String(err)}`);
     }
     setRunning(false);
   };

@@ -35,7 +35,7 @@ func New() (*SettingsManager, error) {
 		configDir = "."
 	}
 
-	appDir := filepath.Join(configDir, "HashcatGUI")
+	appDir := filepath.Join(configDir, "HashcatStudio")
 	if err := os.MkdirAll(appDir, 0755); err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func New() (*SettingsManager, error) {
 
 	// Try loading existing settings
 	_ = sm.Load()
-	
+
 	// Ensure asset directories exist
 	_ = sm.EnsureDirectories()
 

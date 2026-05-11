@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search } from 'lucide-react';
+import { CreateTask, GetSettings, PreviewTask, ScanAssets, StartTask, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
+import { hashcat } from '../../wailsjs/go/models';
 
 interface ScannedAssets {
   hashes: string[];
@@ -9,22 +11,22 @@ interface ScannedAssets {
   masks: string[];
 }
 
-interface TaskConfig {
-  Hash: string;
-  HashMode: number;
-  AttackMode: number;
-  Dictionaries: string[];
-  Rules: string[];
-  Mask: string;
-  MaskFile: string;
-  OutputFile: string;
-  OutputFormat: number[];
-  Quiet: boolean;
-  StatusTimer: number;
-  EnableMaskIncrementMode: boolean;
-  MaskIncrementMin: number;
-  MaskIncrementMax: number;
-}
+type TaskConfig = Required<Pick<hashcat.HashcatArgs,
+  'Hash' |
+  'HashMode' |
+  'AttackMode' |
+  'Dictionaries' |
+  'Rules' |
+  'Mask' |
+  'MaskFile' |
+  'OutputFile' |
+  'OutputFormat' |
+  'Quiet' |
+  'StatusTimer' |
+  'EnableMaskIncrementMode' |
+  'MaskIncrementMin' |
+  'MaskIncrementMax'
+>>;
 
 const DEFAULT_CONFIG: TaskConfig = {
   Hash: '',
@@ -55,14 +57,13 @@ export const NewTask = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const app = (window as any).go?.main?.App;
-        if (app) {
+        if (window.go?.main?.App) {
           const [loadedAssets, settings] = await Promise.all([
-            app.ScanAssets(),
-            app.GetSettings(),
+            ScanAssets(),
+            GetSettings(),
           ]);
           setAssets(loadedAssets);
-          const info = await app.ValidateHashcatBinary(settings.hashcatBinaryPath);
+          const info = await ValidateHashcatBinary(settings.hashcatBinaryPath);
           if (info?.valid && info.algorithms) setAlgorithms(info.algorithms);
           setConfig(c => ({ ...c, OutputFile: settings.outputDir ? `${settings.outputDir}/found.txt` : '' }));
         } else {
@@ -85,9 +86,8 @@ export const NewTask = () => {
   useEffect(() => {
     const updatePreview = async () => {
       try {
-        const app = (window as any).go?.main?.App;
-        if (app) {
-          const args = await app.PreviewTask(config);
+        if (window.go?.main?.App) {
+          const args = await PreviewTask(config);
           setPreview(args);
           setPreviewError('');
         } else {
@@ -101,8 +101,8 @@ export const NewTask = () => {
           setPreview(args);
           setPreviewError('');
         }
-      } catch (err: any) {
-        setPreviewError(err.message || String(err));
+      } catch (err: unknown) {
+        setPreviewError(err instanceof Error ? err.message : String(err));
         setPreview([]);
       }
     };
@@ -116,7 +116,7 @@ export const NewTask = () => {
     return entries.filter(([id, name]) => id.includes(q) || (name as string).toLowerCase().includes(q));
   }, [algorithms, algoSearch]);
 
-  const handleChange = (field: keyof TaskConfig, value: any) => {
+  const handleChange = <K extends keyof TaskConfig>(field: K, value: TaskConfig[K]) => {
     setConfig(prev => ({ ...prev, [field]: value }));
   };
 
@@ -130,13 +130,12 @@ export const NewTask = () => {
   const handleCreate = async (start: boolean) => {
     setCreating(true);
     try {
-      const app = (window as any).go?.main?.App;
-      if (app) {
-        const taskId = await app.CreateTask(config);
-        if (start) await app.StartTask(taskId);
+      if (window.go?.main?.App) {
+        const taskId = await CreateTask(config);
+        if (start) await StartTask(taskId);
       }
       setConfig({ ...DEFAULT_CONFIG, OutputFile: config.OutputFile });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Create failed', err);
     } finally {
       setCreating(false);

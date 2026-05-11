@@ -31,6 +31,12 @@ function App() {
     <div className="app-container">
       <Sidebar activePage={activePage} setActivePage={setActivePage} />
       <main className="main-content">
+        <div className="topbar">
+          <div>
+            <span className="topbar-title">Hashcat Studio</span>
+            <span className="topbar-subtitle">A simple desktop GUI for authorized Hashcat sessions</span>
+          </div>
+        </div>
         <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
       </main>
     </div>

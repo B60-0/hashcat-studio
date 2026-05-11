@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,14 +12,16 @@ import (
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"context"
 )
 
 type Task struct {
-	ID        string
-	Arguments []string
-	State     string
-	CreatedAt int64
+	mu         sync.Mutex
+	ID         string
+	BinaryPath string
+	Arguments  []string
+	State      string
+	CreatedAt  int64
+	started    bool
 
 	cmd    *exec.Cmd
 	stdin  io.WriteCloser
@@ -29,50 +32,63 @@ type Task struct {
 }
 
 func NewTask(id string, binaryPath string, args []string, manager *TaskManager) *Task {
-	// The underlying context will be bound to the application lifetime, but we add our own cancel for force quit
-	ctx, cancel := context.WithCancel(context.Background())
-	
-	cmd := exec.CommandContext(ctx, binaryPath, args...)
-	
 	return &Task{
-		ID:        id,
-		Arguments: args,
-		State:     "Not Started",
-		CreatedAt: time.Now().Unix(),
-		cmd:       cmd,
-		ctx:       ctx,
-		cancel:    cancel,
-		manager:   manager,
+		ID:         id,
+		BinaryPath: binaryPath,
+		Arguments:  args,
+		State:      "Not Started",
+		CreatedAt:  time.Now().Unix(),
+		manager:    manager,
 	}
 }
 
 func (t *Task) Start() error {
-	if t.State == "Running" || t.State == "Paused" {
-		return fmt.Errorf("task already started")
+	t.mu.Lock()
+	if t.started {
+		t.mu.Unlock()
+		return fmt.Errorf("task has already been started")
 	}
-
-	stdin, err := t.cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-	t.stdin = stdin
-
-	stdout, err := t.cmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
-
-	stderr, err := t.cmd.StderrPipe()
-	if err != nil {
-		return err
-	}
-
-	if err := t.cmd.Start(); err != nil {
+	if t.BinaryPath == "" {
 		t.State = "Failed"
+		t.mu.Unlock()
+		return fmt.Errorf("hashcat binary path is not set")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cmd := exec.CommandContext(ctx, t.BinaryPath, t.Arguments...)
+	t.ctx = ctx
+	t.cancel = cancel
+	t.cmd = cmd
+	t.started = true
+	t.mu.Unlock()
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		t.setState("Failed")
 		return err
 	}
 
-	t.State = "Running"
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.setState("Failed")
+		return err
+	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		t.setState("Failed")
+		return err
+	}
+
+	t.mu.Lock()
+	t.stdin = stdin
+	t.mu.Unlock()
+
+	if err := cmd.Start(); err != nil {
+		t.setState("Failed")
+		return err
+	}
+
+	t.setState("Running")
 	t.manager.emitUpdate(t.ID)
 
 	var wg sync.WaitGroup
@@ -99,20 +115,45 @@ func (t *Task) Start() error {
 
 	go func() {
 		wg.Wait()
-		err := t.cmd.Wait()
-		
-		if t.State != "Quit" { // If user forced quit, keep state as Quit
+		err := cmd.Wait()
+
+		if t.getState() != "Quit" { // If user forced quit, keep state as Quit
 			if err != nil {
-				t.State = "Failed"
+				t.setState("Failed")
 			} else {
-				t.State = "Finished"
+				t.setState("Finished")
 			}
 		}
-		
+
 		t.manager.emitUpdate(t.ID)
 	}()
 
 	return nil
+}
+
+func (t *Task) getState() string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.State
+}
+
+func (t *Task) setState(state string) {
+	t.mu.Lock()
+	t.State = state
+	t.mu.Unlock()
+}
+
+func (t *Task) writeControl(expectedState string, input string) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.State != expectedState {
+		return fmt.Errorf("task is not %s", strings.ToLower(expectedState))
+	}
+	if t.stdin == nil {
+		return fmt.Errorf("task stdin is not available")
+	}
+	_, err := io.WriteString(t.stdin, input)
+	return err
 }
 
 func (t *Task) processOutput(line string, source string) {
@@ -128,7 +169,7 @@ func (t *Task) processOutput(line string, source string) {
 				runtime.EventsEmit(t.manager.wailsCtx, "task:updated", UpdateEvent{
 					TaskID:    t.ID,
 					Status:    status,
-					State:     t.State,
+					State:     t.getState(),
 					Timestamp: time.Now().Unix(),
 				})
 			}
@@ -148,68 +189,65 @@ func (t *Task) processOutput(line string, source string) {
 }
 
 func (t *Task) Pause() error {
-	if t.State != "Running" {
-		return fmt.Errorf("task is not running")
-	}
-	_, err := io.WriteString(t.stdin, "p\n")
+	err := t.writeControl("Running", "p\n")
 	if err == nil {
-		t.State = "Paused"
+		t.setState("Paused")
 		t.manager.emitUpdate(t.ID)
 	}
 	return err
 }
 
 func (t *Task) Resume() error {
-	if t.State != "Paused" {
-		return fmt.Errorf("task is not paused")
-	}
-	_, err := io.WriteString(t.stdin, "r\n")
+	err := t.writeControl("Paused", "r\n")
 	if err == nil {
-		t.State = "Running"
+		t.setState("Running")
 		t.manager.emitUpdate(t.ID)
 	}
 	return err
 }
 
 func (t *Task) Checkpoint() error {
-	if t.State != "Running" {
-		return fmt.Errorf("task is not running")
-	}
-	_, err := io.WriteString(t.stdin, "c\n")
-	return err
+	return t.writeControl("Running", "c\n")
 }
 
 func (t *Task) Skip() error {
-	if t.State != "Running" {
-		return fmt.Errorf("task is not running")
-	}
-	_, err := io.WriteString(t.stdin, "b\n")
-	return err
+	return t.writeControl("Running", "b\n")
 }
 
 func (t *Task) Quit() error {
-	if t.State == "Not Started" || t.State == "Finished" || t.State == "Failed" {
+	t.mu.Lock()
+	state := t.State
+	stdin := t.stdin
+	cmd := t.cmd
+	cancel := t.cancel
+	t.mu.Unlock()
+
+	if state == "Not Started" || state == "Finished" || state == "Failed" || state == "Quit" {
 		return fmt.Errorf("task is not active")
 	}
-	
+
 	// Try graceful quit
-	io.WriteString(t.stdin, "q\n")
-	
-	t.State = "Quit"
+	if stdin != nil {
+		_, _ = io.WriteString(stdin, "q\n")
+	}
+
+	t.setState("Quit")
 	t.manager.emitUpdate(t.ID)
-	
+
 	// Hard kill as fallback after slight delay if it doesn't stop
 	go func() {
 		time.Sleep(2 * time.Second)
-		if t.cmd.ProcessState == nil {
-			t.cancel()
+		if cmd != nil && cmd.ProcessState == nil && cancel != nil {
+			cancel()
 		}
 	}()
-	
+
 	return nil
 }
 
 func (t *Task) ToInfo() TaskInfo {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return TaskInfo{
 		ID:        t.ID,
 		Arguments: t.Arguments,

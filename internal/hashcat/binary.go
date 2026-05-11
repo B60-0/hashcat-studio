@@ -1,7 +1,6 @@
 package hashcat
 
 import (
-	"bytes"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -11,14 +10,16 @@ import (
 )
 
 var (
-	reMode = regexp.MustCompile(`^\s*(\d+)\s*\|\s*(.*)$`)
+	reHashInfoMode = regexp.MustCompile(`^Hash mode #(\d+)$`)
+	reHashInfoName = regexp.MustCompile(`^\s*Name\.*:\s*(.+)$`)
+	reTableMode    = regexp.MustCompile(`^\s*(\d+)\s*\|\s*([^|]+)`)
 )
 
 type HashcatBinaryInfo struct {
-	Valid      bool             `json:"valid"`
-	Version    string           `json:"version"`
+	Valid      bool           `json:"valid"`
+	Version    string         `json:"version"`
 	Algorithms map[int]string `json:"algorithms"`
-	Error      string           `json:"error"`
+	Error      string         `json:"error"`
 }
 
 // ValidateHashcatBinary checks if the hashcat binary exists and extracts its version and algorithms.
@@ -32,7 +33,7 @@ func ValidateHashcatBinary(binaryPath string) HashcatBinaryInfo {
 	wdir := filepath.Dir(binaryPath)
 	cmd := exec.Command(binaryPath, "--version")
 	cmd.Dir = wdir
-	
+
 	versionBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		info.Error = fmt.Sprintf("Failed to run binary: %v", err)
@@ -43,31 +44,39 @@ func ValidateHashcatBinary(binaryPath string) HashcatBinaryInfo {
 	// 2. Load algorithms
 	cmdAlgorithms := exec.Command(binaryPath, "--hash-info", "--quiet")
 	cmdAlgorithms.Dir = wdir
-	
+
 	algorithmsBytes, err := cmdAlgorithms.CombinedOutput()
 	if err != nil {
 		info.Error = fmt.Sprintf("Failed to load algorithms: %v", err)
 		return info
 	}
 
-	// Parse algorithms
-	lines := bytes.Split(algorithmsBytes, []byte("\n"))
+	lines := strings.Split(string(algorithmsBytes), "\n")
+	currentMode := -1
 	for _, line := range lines {
-		strLine := strings.TrimSpace(string(line))
+		strLine := strings.TrimSpace(line)
 		if strLine == "" {
 			continue
 		}
-		
-		// Typically Hashcat outputs:
-		// 900 | MD4 | Raw Hash
-		parts := strings.SplitN(strLine, "|", 3)
-		if len(parts) >= 2 {
-			modeStr := strings.TrimSpace(parts[0])
-			nameStr := strings.TrimSpace(parts[1])
-			
-			mode, err := strconv.Atoi(modeStr)
+
+		if match := reHashInfoMode.FindStringSubmatch(strLine); len(match) == 2 {
+			mode, err := strconv.Atoi(match[1])
 			if err == nil {
-				info.Algorithms[mode] = nameStr
+				currentMode = mode
+			}
+			continue
+		}
+
+		if match := reHashInfoName.FindStringSubmatch(line); len(match) == 2 && currentMode >= 0 {
+			info.Algorithms[currentMode] = strings.TrimSpace(match[1])
+			currentMode = -1
+			continue
+		}
+
+		if match := reTableMode.FindStringSubmatch(strLine); len(match) == 3 {
+			mode, err := strconv.Atoi(match[1])
+			if err == nil {
+				info.Algorithms[mode] = strings.TrimSpace(match[2])
 			}
 		}
 	}
@@ -81,12 +90,12 @@ func GetDevices(binaryPath string) (string, error) {
 	wdir := filepath.Dir(binaryPath)
 	cmd := exec.Command(binaryPath, "-I", "--quiet")
 	cmd.Dir = wdir
-	
+
 	devicesBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("failed to get devices: %v", err)
 	}
-	
+
 	return strings.TrimSpace(string(devicesBytes)), nil
 }
 
@@ -95,11 +104,11 @@ func RunBenchmark(binaryPath string, hashMode int) (string, error) {
 	wdir := filepath.Dir(binaryPath)
 	cmd := exec.Command(binaryPath, "-b", fmt.Sprintf("-m%d", hashMode), "--quiet")
 	cmd.Dir = wdir
-	
+
 	benchmarkBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("benchmark failed: %v", err)
 	}
-	
+
 	return strings.TrimSpace(string(benchmarkBytes)), nil
 }

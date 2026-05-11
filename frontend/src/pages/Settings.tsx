@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Save, ShieldCheck, ShieldX, Loader2 } from 'lucide-react';
+import { GetSettings, UpdateSettings, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
 
 interface SettingsData {
   hashcatBinaryPath: string;
@@ -39,9 +40,8 @@ export const Settings = () => {
   useEffect(() => {
     (async () => {
       try {
-        const app = (window as any).go?.main?.App;
-        if (app?.GetSettings) {
-          setSettings(await app.GetSettings());
+        if (window.go?.main?.App) {
+          setSettings(await GetSettings());
         } else {
           setSettings({
             hashcatBinaryPath: '/usr/local/bin/hashcat',
@@ -64,9 +64,8 @@ export const Settings = () => {
     setSaving(true);
     setMessage(null);
     try {
-      const app = (window as any).go?.main?.App;
-      if (app?.UpdateSettings) {
-        await app.UpdateSettings(settings);
+      if (window.go?.main?.App) {
+        await UpdateSettings(settings);
       }
       setMessage({ text: 'Settings saved', type: 'success' });
     } catch {
@@ -81,9 +80,8 @@ export const Settings = () => {
     setValidating(true);
     setValidation(null);
     try {
-      const app = (window as any).go?.main?.App;
-      if (app?.ValidateHashcatBinary) {
-        setValidation(await app.ValidateHashcatBinary(settings.hashcatBinaryPath));
+      if (window.go?.main?.App) {
+        setValidation(await ValidateHashcatBinary(settings.hashcatBinaryPath));
       } else {
         await new Promise(r => setTimeout(r, 600));
         setValidation({ valid: true, version: 'v6.2.6 (Mock)', algorithms: { 0: 'MD5', 100: 'SHA1' }, error: '' });
@@ -92,7 +90,7 @@ export const Settings = () => {
     setValidating(false);
   };
 
-  const set = (field: keyof SettingsData, value: any) => {
+  const set = <K extends keyof SettingsData>(field: K, value: SettingsData[K]) => {
     if (settings) setSettings({ ...settings, [field]: value });
   };
 

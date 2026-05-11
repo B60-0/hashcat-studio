@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, SkipForward, Save, Square, Trash2, Terminal, Inbox } from 'lucide-react';
+import { DeleteTask, ListTasks, PauseTask, QuitTask, ResumeTask, SkipTask, StartTask, CheckpointTask } from '../../wailsjs/go/main/App';
+import { EventsOff, EventsOn } from '../../wailsjs/runtime/runtime';
 
 interface TaskInfo {
   id: string;
@@ -11,9 +13,19 @@ interface TaskInfo {
 
 interface UpdateEvent {
   task_id: string;
-  status: any;
+  status: {
+    progress?: number[];
+    recovered_hashes?: number[];
+    time_start_absolute?: number;
+  };
   state: string;
   timestamp: number;
+}
+
+interface LogEvent {
+  task_id: string;
+  source: string;
+  message: string;
 }
 
 const STATE_BADGE: Record<string, string> = {
@@ -34,9 +46,8 @@ export const Tasks = () => {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const app = (window as any).go?.main?.App;
-      if (app?.ListTasks) {
-        const t = await app.ListTasks();
+      if (window.go?.main?.App) {
+        const t = await ListTasks();
         setTasks(t || []);
       }
     } catch (err) { console.error(err); }
@@ -48,26 +59,24 @@ export const Tasks = () => {
 
   useEffect(() => {
     fetchTasks();
-    const rt = (window as any).runtime;
-    if (rt?.EventsOn) {
-      rt.EventsOn('task:log', (e: any) => {
+    if (window.runtime?.EventsOn) {
+      EventsOn('task:log', (e: LogEvent) => {
         setLogs(prev => ({
           ...prev,
           [e.task_id]: [...(prev[e.task_id] || []), `[${e.source}] ${e.message}`],
         }));
       });
-      rt.EventsOn('task:updated', (e: UpdateEvent) => {
+      EventsOn('task:updated', (e: UpdateEvent) => {
         setUpdates(prev => ({ ...prev, [e.task_id]: e }));
         fetchTasks();
       });
-      rt.EventsOn('task:info', fetchTasks);
-      rt.EventsOn('task:created', fetchTasks);
-      rt.EventsOn('task:deleted', fetchTasks);
+      EventsOn('task:info', fetchTasks);
+      EventsOn('task:created', fetchTasks);
+      EventsOn('task:deleted', fetchTasks);
     }
     return () => {
-      const rt = (window as any).runtime;
-      if (rt?.EventsOff) {
-        ['task:log', 'task:updated', 'task:info', 'task:created', 'task:deleted'].forEach(e => rt.EventsOff(e));
+      if (window.runtime?.EventsOff) {
+        ['task:log', 'task:updated', 'task:info', 'task:created', 'task:deleted'].forEach(e => EventsOff(e));
       }
     };
   }, [fetchTasks]);
@@ -78,17 +87,16 @@ export const Tasks = () => {
 
   const act = async (action: string) => {
     if (!selectedId) return;
-    const app = (window as any).go?.main?.App;
-    if (!app) return;
+    if (!window.go?.main?.App) return;
     try {
-      const fn: Record<string, () => Promise<any>> = {
-        start: () => app.StartTask(selectedId),
-        pause: () => app.PauseTask(selectedId),
-        resume: () => app.ResumeTask(selectedId),
-        skip: () => app.SkipTask(selectedId),
-        checkpoint: () => app.CheckpointTask(selectedId),
-        quit: () => app.QuitTask(selectedId),
-        delete: async () => { await app.DeleteTask(selectedId); setSelectedId(null); },
+      const fn: Record<string, () => Promise<void>> = {
+        start: () => StartTask(selectedId),
+        pause: () => PauseTask(selectedId),
+        resume: () => ResumeTask(selectedId),
+        skip: () => SkipTask(selectedId),
+        checkpoint: () => CheckpointTask(selectedId),
+        quit: () => QuitTask(selectedId),
+        delete: async () => { await DeleteTask(selectedId); setSelectedId(null); },
       };
       await fn[action]?.();
     } catch (err) { console.error(err); }

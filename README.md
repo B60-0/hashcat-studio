@@ -1,81 +1,111 @@
-# Hashcat GUI
+# Hashcat Studio
 
-A modern, high-performance, cross-platform desktop application for managing Hashcat cracking sessions. Built with **Go**, **React**, and **Wails**, this application provides a secure, interactive interface to configure attacks, manage wordlists, and monitor live cracking progress.
+Hashcat Studio is a simple desktop interface for running authorized Hashcat sessions. It gives you a clean way to choose a Hashcat binary, organize hashes and wordlists, build dictionary or mask attacks, preview the command, and monitor task output without living in a terminal.
 
-![Hashcat GUI](frontend/src/assets/images/app-preview.png) *(Preview placeholder)*
+It does not bundle Hashcat. You install Hashcat separately, then point the app to your local binary.
 
-## ✨ Features
+> Use this only for systems, hashes, and audits you are allowed to test.
 
-- **Dynamic Task Dashboard:** Real-time monitoring of active tasks with live progress bars, recovered hash counts, and streamed terminal logs.
-- **Visual Hardware Management:** Automatically detects OpenCL/CUDA devices and runs visual benchmarks straight from the interface.
-- **Secure Subprocess Execution:** Built with security in mind. Uses exact string slices via `os/exec`—eliminating command injection vulnerabilities.
-- **Modern UI/UX:** A stunning, responsive dark mode interface powered by React, Framer Motion, and Lucide React.
-- **Asset Auto-Discovery:** Configure your paths once, and the app will automatically scan for new `.txt`, `.rule`, `.hash`, and `.hcmask` files.
+## Features
 
----
+- Dictionary and mask attack setup
+- Hashcat command preview before launch
+- Task list with live stdout/stderr logs
+- Pause, resume, checkpoint, skip, and quit controls
+- Asset folders for hashes, dictionaries, rules, masks, and outputs
+- Hashcat binary validation and algorithm loading
+- Device info via `hashcat -I`
+- Benchmarks by hash mode
+- Cross-platform desktop build with Wails
 
-## 🛠 Prerequisites
+## Install
 
-Before running or building the project, ensure you have the following installed on your system:
+Download the latest release for your OS from the GitHub Releases page.
 
-1. **[Go](https://go.dev/dl/)** (1.20+)
-2. **[Node.js](https://nodejs.org/)** (18+)
-3. **[Wails CLI](https://wails.io/docs/gettingstarted/installation)** 
+### macOS
+
+1. Install Hashcat:
    ```bash
-   go install github.com/wailsapp/wails/v2/cmd/wails@latest
+   brew install hashcat
    ```
-4. **[Hashcat](https://hashcat.net/hashcat/)** (Must be installed and accessible, e.g., via `brew install hashcat` on macOS, or in your system PATH).
-
----
-
-## 🚀 Development Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone <your-repository-url>
-   cd hashcat-gui
-   ```
-
-2. **Run in Development Mode**
-   Start the application with live-reloading enabled. The backend will recompile on Go changes, and the React frontend will hot-reload on UI changes.
-   ```bash
-   wails dev
+2. Download the macOS release archive.
+3. Open Hashcat Studio.
+4. In Settings, set the Hashcat binary path. Apple Silicon Homebrew usually installs it at:
+   ```text
+   /opt/homebrew/bin/hashcat
    ```
 
-3. **Configure the App**
-   On the first launch, go to the **Settings** page:
-   - Point the Hashcat Binary Path to your installation (e.g., `/usr/local/bin/hashcat` or `/opt/homebrew/bin/hashcat`).
-   - Define the directories where you store your hashes, wordlists, rules, and masks.
+### Windows
 
----
+1. Install Hashcat from [hashcat.net](https://hashcat.net/hashcat/).
+2. Download the Windows release archive.
+3. Run `hashcat-studio.exe`.
+4. In Settings, set the path to `hashcat.exe`.
 
-## 📦 Building for Production
+### Linux
 
-To compile a standalone, native executable for your operating system:
+1. Install Hashcat with your package manager or from [hashcat.net](https://hashcat.net/hashcat/).
+2. Download the Linux release archive.
+3. Make the binary executable if needed:
+   ```bash
+   chmod +x hashcat-studio
+   ```
+4. Run it and set the Hashcat binary path in Settings.
+
+## Build From Source
+
+Requirements:
+
+- Go 1.22+
+- Node.js 20+
+- Wails CLI
+- Hashcat
+
+Install Wails:
 
 ```bash
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+```
+
+Build:
+
+```bash
+npm --prefix frontend install
+npm --prefix frontend run build
+go test ./internal/...
 wails build
 ```
 
-The compiled binary will be placed in the `build/bin/` directory.
+The desktop binary is written to `build/bin/`.
 
-- *Optional:* To build a cleaner, compressed binary without the console attached (on Windows/macOS):
-  ```bash
-  wails build -upx -trimpath -ldflags "-s -w"
-  ```
+## Development
 
----
+```bash
+npm --prefix frontend install
+wails dev
+```
 
-## 🏗 Architecture Overview
+Useful checks:
 
-- **Backend (`/internal`)**: Written in Go. Manages persistent configurations, securely spawns and tracks Hashcat processes, and scans the local filesystem for dictionaries/masks.
-- **Frontend (`/frontend`)**: Written in React + TypeScript, bundled with Vite. Communicates seamlessly with the Go backend via Wails' auto-generated bindings.
-- **Security**: The UI never constructs raw shell commands. All parameters are validated and passed as discrete slices to the backend runner.
+```bash
+go test ./internal/...
+npm --prefix frontend run lint
+npm --prefix frontend run build
+```
 
----
+## Project Layout
 
-## 📄 License
+```text
+internal/hashcat   Hashcat argument building and binary helpers
+internal/tasks     task manager and subprocess streaming
+internal/assets    asset folder scanner
+internal/settings  app settings and folders
+frontend/src       React UI
+docs/wiki          GitHub wiki source pages
+```
 
-This project is open-source and available under the [MIT License](LICENSE).
+## License
 
-*(Note: Hashcat itself is licensed under the MIT License and must be installed separately by the user. This GUI is a third-party wrapper and is not officially affiliated with the Hashcat project.)*
+MIT. See [LICENSE](LICENSE).
+
+Hashcat Studio is not affiliated with the Hashcat project. Hashcat is installed separately by the user.

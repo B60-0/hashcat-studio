@@ -1,0 +1,37 @@
+name: Bug report
+description: Report something that is broken
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve Hashcat Studio. Do not include real hashes, credentials, or private audit data.
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: macOS 15, Windows 11, Ubuntu 24.04
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: Hashcat Studio version
+      placeholder: v0.1.0
+  - type: input
+    id: hashcat-version
+    attributes:
+      label: Hashcat version
+      placeholder: hashcat v7.1.2
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the task log if it is safe to share.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open Settings\n2. Set binary path\n3. Click Validate"

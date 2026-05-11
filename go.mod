@@ -1,4 +1,4 @@
-module hashcat-gui
+module hashcat-studio
 
 go 1.22.0
 
