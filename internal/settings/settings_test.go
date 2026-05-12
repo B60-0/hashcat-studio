@@ -23,6 +23,8 @@ func TestSettingsLoadSave(t *testing.T) {
 	newSet := sm.Get()
 	newSet.HashcatBinaryPath = "/usr/bin/hashcat"
 	newSet.DefaultStatusTimer = 20
+	newSet.EscrowEnabled = true
+	newSet.HashesComAPIKey = "test-key"
 
 	err := sm.Update(newSet)
 	if err != nil {
@@ -43,6 +45,12 @@ func TestSettingsLoadSave(t *testing.T) {
 	}
 	if sm2.settings.DefaultStatusTimer != 20 {
 		t.Errorf("Expected timer 20, got %d", sm2.settings.DefaultStatusTimer)
+	}
+	if !sm2.settings.EscrowEnabled {
+		t.Errorf("Expected escrow to be enabled")
+	}
+	if sm2.settings.HashesComAPIKey != "test-key" {
+		t.Errorf("Expected hashes.com API key to be saved")
 	}
 }
 

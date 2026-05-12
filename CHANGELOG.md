@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0
+
+Hashes.com escrow integration.
+
+- Added an Escrow option in Settings with a hashes.com API key field.
+- Added a Hashes.com Escrow page that loads public jobs, or account jobs when an API key is saved.
+- Added a Pull Hashes action that saves a job's unfound list into the configured hashes directory.
+- Added backend parsing and tests for hashes.com's escrow jobs API.
+- Fixed the setup screen so it still renders when opened in browser-based development mode.
+
 ## 0.3.1
 
 First-run setup motion polish.

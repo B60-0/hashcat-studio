@@ -20,6 +20,8 @@ type Settings struct {
 	DefaultStatusTimer     int    `json:"defaultStatusTimer"`
 	DefaultWorkloadProfile int    `json:"defaultWorkloadProfile"`
 	Theme                  string `json:"theme"`
+	EscrowEnabled          bool   `json:"escrowEnabled"`
+	HashesComAPIKey        string `json:"hashesComApiKey"`
 }
 
 // SettingsManager handles application configuration and preferences.
@@ -58,6 +60,8 @@ func New() (*SettingsManager, error) {
 			DefaultStatusTimer:     10,
 			DefaultWorkloadProfile: 2,
 			Theme:                  "dark",
+			EscrowEnabled:          false,
+			HashesComAPIKey:        "",
 		},
 	}
 

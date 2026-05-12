@@ -14,6 +14,10 @@ export function DeleteTask(arg1) {
   return window['go']['main']['App']['DeleteTask'](arg1);
 }
 
+export function DownloadHashesComEscrowJobHashes(arg1, arg2) {
+  return window['go']['main']['App']['DownloadHashesComEscrowJobHashes'](arg1, arg2);
+}
+
 export function GetAssetFolders() {
   return window['go']['main']['App']['GetAssetFolders']();
 }
@@ -28,6 +32,10 @@ export function GetSettings() {
 
 export function GetSetupState() {
   return window['go']['main']['App']['GetSetupState']();
+}
+
+export function ListHashesComEscrowJobs() {
+  return window['go']['main']['App']['ListHashesComEscrowJobs']();
 }
 
 export function ListTasks() {

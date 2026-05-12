@@ -7,6 +7,7 @@ import { Files } from "./pages/Files";
 import { Devices } from "./pages/Devices";
 import { Settings } from "./pages/Settings";
 import { Setup } from "./pages/Setup";
+import { Escrow } from "./pages/Escrow";
 import { AnimatePresence } from "framer-motion";
 import { GetSettings, GetSetupState } from "../wailsjs/go/main/App";
 import { useTheme, type Theme } from "./theme";
@@ -25,6 +26,7 @@ const PAGE_TITLES: Record<string, string> = {
   "new-task": "Hashcat Studio",
   tasks: "Tasks",
   files: "Files",
+  escrow: "Escrow",
   devices: "Devices",
   settings: "Settings",
 };
@@ -33,6 +35,7 @@ const PAGE_SUBTITLES: Record<string, string> = {
   "new-task": "A simple desktop GUI for authorized Hashcat sessions",
   tasks: "Monitor and control active Hashcat sessions",
   files: "Browse hashes, wordlists, rules, and masks",
+  escrow: "Pull jobs from hashes.com escrow",
   devices: "OpenCL and CUDA backends",
   settings: "Configure Hashcat binary, asset folders, and appearance",
 };
@@ -74,6 +77,8 @@ function App() {
         return <Tasks key="tasks" />;
       case "files":
         return <Files key="files" />;
+      case "escrow":
+        return <Escrow key="escrow" />;
       case "devices":
         return <Devices key="devices" />;
       case "settings":

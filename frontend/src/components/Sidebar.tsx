@@ -4,6 +4,7 @@ import {
   FileText,
   Cpu,
   Settings,
+  Handshake,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import logo from "../assets/hashcat-logo.png";
@@ -17,6 +18,7 @@ const navItems = [
   { id: "new-task", label: "New Task", icon: PlusCircle },
   { id: "tasks", label: "Tasks", icon: LayoutDashboard },
   { id: "files", label: "Files", icon: FileText },
+  { id: "escrow", label: "Escrow", icon: Handshake },
   { id: "devices", label: "Devices", icon: Cpu },
   { id: "settings", label: "Settings", icon: Settings },
 ];

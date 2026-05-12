@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"hashcat-studio/internal/assets"
 	"hashcat-studio/internal/hashcat"
+	"hashcat-studio/internal/hashescom"
 	"hashcat-studio/internal/settings"
 	"hashcat-studio/internal/tasks"
+	"strings"
 	"sync"
 )
 
@@ -15,6 +17,7 @@ type App struct {
 	ctx             context.Context
 	settingsManager *settings.SettingsManager
 	assetManager    *assets.AssetManager
+	hashesClient    *hashescom.Client
 	taskManager     *tasks.TaskManager
 	setupMu         sync.Mutex
 	setupRunning    bool
@@ -28,13 +31,22 @@ func NewApp() *App {
 	}
 
 	am := assets.New()
+	hc := hashescom.NewClient("")
 	tm := tasks.NewManager()
 
 	return &App{
 		settingsManager: sm,
 		assetManager:    am,
+		hashesClient:    hc,
 		taskManager:     tm,
 	}
+}
+
+func (a *App) requestContext() context.Context {
+	if a.ctx != nil {
+		return a.ctx
+	}
+	return context.Background()
 }
 
 // startup is called when the app starts. The context is saved
@@ -86,6 +98,60 @@ type ScannedAssets struct {
 	Dictionaries []string `json:"dictionaries"`
 	Rules        []string `json:"rules"`
 	Masks        []string `json:"masks"`
+}
+
+type HashesComEscrowJobsResult struct {
+	Enabled       bool                  `json:"enabled"`
+	Authenticated bool                  `json:"authenticated"`
+	Jobs          []hashescom.EscrowJob `json:"jobs"`
+}
+
+// ListHashesComEscrowJobs returns active hashes.com escrow jobs.
+func (a *App) ListHashesComEscrowJobs() (HashesComEscrowJobsResult, error) {
+	result := HashesComEscrowJobsResult{
+		Jobs: []hashescom.EscrowJob{},
+	}
+
+	if a.settingsManager == nil {
+		return result, fmt.Errorf("settings manager not initialized")
+	}
+	if a.hashesClient == nil {
+		return result, fmt.Errorf("hashes.com client not initialized")
+	}
+
+	s := a.settingsManager.Get()
+	result.Enabled = s.EscrowEnabled
+	if !s.EscrowEnabled {
+		return result, fmt.Errorf("escrow is disabled")
+	}
+
+	apiKey := strings.TrimSpace(s.HashesComAPIKey)
+	result.Authenticated = apiKey != ""
+
+	jobs, err := a.hashesClient.ListJobs(a.requestContext(), apiKey, result.Authenticated)
+	if err != nil {
+		return result, err
+	}
+	result.Jobs = jobs
+
+	return result, nil
+}
+
+// DownloadHashesComEscrowJobHashes saves a hashes.com unfound list into the configured hashes directory.
+func (a *App) DownloadHashesComEscrowJobHashes(jobID int, leftList string) (string, error) {
+	if a.settingsManager == nil {
+		return "", fmt.Errorf("settings manager not initialized")
+	}
+	if a.hashesClient == nil {
+		return "", fmt.Errorf("hashes.com client not initialized")
+	}
+
+	s := a.settingsManager.Get()
+	if !s.EscrowEnabled {
+		return "", fmt.Errorf("escrow is disabled")
+	}
+
+	return a.hashesClient.DownloadLeftList(a.requestContext(), jobID, leftList, strings.TrimSpace(s.HashesComAPIKey), s.HashesDir)
 }
 
 // ScanAssets recursively scans all the asset folders and returns the results

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, ShieldCheck, ShieldX, Loader2, Moon, Sun } from 'lucide-react';
+import { Save, ShieldCheck, ShieldX, Loader2, Moon, Sun, Handshake, KeyRound } from 'lucide-react';
 import { GetSettings, UpdateSettings, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
 import { useTheme, type Theme } from '../theme';
 
@@ -16,6 +16,8 @@ interface SettingsData {
   defaultStatusTimer: number;
   defaultWorkloadProfile: number;
   theme: string;
+  escrowEnabled: boolean;
+  hashesComApiKey: string;
 }
 
 interface ValidationInfo {
@@ -65,6 +67,8 @@ export const Settings = () => {
             defaultStatusTimer: 10,
             defaultWorkloadProfile: 2,
             theme: 'dark',
+            escrowEnabled: false,
+            hashesComApiKey: '',
           });
         }
       } catch (err) { console.error(err); }
@@ -187,6 +191,41 @@ export const Settings = () => {
                   <input className="form-input" type="text" value={settings[key] as string} onChange={e => set(key, e.target.value)} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }} />
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Escrow */}
+          <div className="glass-card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <Handshake size={16} style={{ color: 'var(--cyan)' }} />
+              <span className="section-title" style={{ margin: 0 }}>Hashes.com Escrow</span>
+            </div>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.875rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={settings.escrowEnabled}
+                onChange={e => set('escrowEnabled', e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: 'var(--accent)' }}
+              />
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Enable Escrow</span>
+            </label>
+
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <KeyRound size={13} />
+                Hashes.com API Key
+              </label>
+              <input
+                className="form-input"
+                type="password"
+                value={settings.hashesComApiKey}
+                onChange={e => set('hashesComApiKey', e.target.value)}
+                placeholder="Optional for public jobs"
+                disabled={!settings.escrowEnabled}
+                autoComplete="off"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              />
             </div>
           </div>
 

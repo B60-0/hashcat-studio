@@ -11,6 +11,8 @@ export function CreateTask(arg1:hashcat.HashcatArgs):Promise<string>;
 
 export function DeleteTask(arg1:string):Promise<void>;
 
+export function DownloadHashesComEscrowJobHashes(arg1:number,arg2:string):Promise<string>;
+
 export function GetAssetFolders():Promise<main.AssetFolders>;
 
 export function GetDevices():Promise<string>;
@@ -18,6 +20,8 @@ export function GetDevices():Promise<string>;
 export function GetSettings():Promise<settings.Settings>;
 
 export function GetSetupState():Promise<main.SetupState>;
+
+export function ListHashesComEscrowJobs():Promise<main.HashesComEscrowJobsResult>;
 
 export function ListTasks():Promise<Array<tasks.TaskInfo>>;
 

@@ -71,6 +71,8 @@ export const Setup = ({ initialState, onComplete }: SetupProps) => {
   }, [terminalLines]);
 
   useEffect(() => {
+    if (!window.runtime?.EventsOn || !window.runtime?.EventsOff) return;
+
     EventsOn('setup:progress', (event: SetupProgress) => {
       setStage(event.finished ? 'done' : 'installing');
       setProgress(event);
