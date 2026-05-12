@@ -6,6 +6,10 @@ export function CheckpointTask(arg1) {
   return window['go']['main']['App']['CheckpointTask'](arg1);
 }
 
+export function CreateRawTask(arg1) {
+  return window['go']['main']['App']['CreateRawTask'](arg1);
+}
+
 export function CreateTask(arg1) {
   return window['go']['main']['App']['CreateTask'](arg1);
 }
@@ -44,6 +48,10 @@ export function ListTasks() {
 
 export function PauseTask(arg1) {
   return window['go']['main']['App']['PauseTask'](arg1);
+}
+
+export function PreviewRawTask(arg1) {
+  return window['go']['main']['App']['PreviewRawTask'](arg1);
 }
 
 export function PreviewTask(arg1) {

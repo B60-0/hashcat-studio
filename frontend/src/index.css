@@ -1173,6 +1173,44 @@ body {
 }
 
 /* ==========================================================================
+   Segmented controls
+   ========================================================================== */
+.segmented-control {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.segmented-control button {
+  min-width: 116px;
+  height: 34px;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.segmented-control button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.segmented-control button.active {
+  background: var(--accent-muted);
+  color: var(--accent-hover);
+}
+
+/* ==========================================================================
    Animations
    ========================================================================== */
 @keyframes pulse-dot {

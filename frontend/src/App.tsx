@@ -55,7 +55,8 @@ function App() {
           setTheme(settings.theme as Theme);
         }
       } else {
-        setSetupState({ required: true, running: false, hashcatBinaryPath: "", hashcatInstallDir: "", valid: false, version: "", error: "" });
+        const mockApp = new URLSearchParams(window.location.search).has("mockApp");
+        setSetupState({ required: !mockApp, running: false, hashcatBinaryPath: "mock/hashcat", hashcatInstallDir: "", valid: mockApp, version: mockApp ? "hashcat v7.1.2 (mock)" : "", error: "" });
       }
     } catch (err) {
       console.error(err);

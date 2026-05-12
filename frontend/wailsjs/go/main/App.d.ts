@@ -7,6 +7,8 @@ import {tasks} from '../models';
 
 export function CheckpointTask(arg1:string):Promise<void>;
 
+export function CreateRawTask(arg1:string):Promise<string>;
+
 export function CreateTask(arg1:hashcat.HashcatArgs):Promise<string>;
 
 export function DeleteTask(arg1:string):Promise<void>;
@@ -26,6 +28,8 @@ export function ListHashesComEscrowJobs():Promise<main.HashesComEscrowJobsResult
 export function ListTasks():Promise<Array<tasks.TaskInfo>>;
 
 export function PauseTask(arg1:string):Promise<void>;
+
+export function PreviewRawTask(arg1:string):Promise<Array<string>>;
 
 export function PreviewTask(arg1:hashcat.HashcatArgs):Promise<Array<string>>;
 

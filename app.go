@@ -243,6 +243,26 @@ func (a *App) PreviewTask(config hashcat.HashcatArgs) ([]string, error) {
 	return config.Build()
 }
 
+// CreateRawTask creates a queued task from direct hashcat arguments.
+func (a *App) CreateRawTask(rawArgs string) (string, error) {
+	if a.settingsManager == nil {
+		return "", fmt.Errorf("settings manager not initialized")
+	}
+	path := a.settingsManager.Get().HashcatBinaryPath
+
+	args, err := hashcat.ParseRawArgs(rawArgs)
+	if err != nil {
+		return "", err
+	}
+
+	return a.taskManager.CreateTask(path, args)
+}
+
+// PreviewRawTask parses direct hashcat arguments without creating a task.
+func (a *App) PreviewRawTask(rawArgs string) ([]string, error) {
+	return hashcat.ParseRawArgs(rawArgs)
+}
+
 func (a *App) StartTask(id string) error {
 	return a.taskManager.StartTask(id)
 }

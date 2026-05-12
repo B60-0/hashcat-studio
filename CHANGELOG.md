@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1
+
+Hashcat argument coverage and QA fixes.
+
+- Added Raw Arguments mode so pasted `hashcat ...` commands and direct flags run through the app without a shell.
+- Added shell-style parsing for quoted paths, escaped spaces, and full `hashcat` command prefixes.
+- Added an Advanced Hashcat Flags field to guided tasks for extra options.
+- Added tests for raw argument parsing and task lifecycle controls.
+- Added a browser-only mock-app mode for QA of every page outside Wails.
+
 ## 0.4.0
 
 Hashes.com escrow integration.

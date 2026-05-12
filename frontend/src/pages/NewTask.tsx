@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search } from 'lucide-react';
-import { CreateTask, GetSettings, PreviewTask, ScanAssets, StartTask, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
+import { Search, TerminalSquare } from 'lucide-react';
+import { CreateRawTask, CreateTask, GetSettings, PreviewRawTask, PreviewTask, ScanAssets, StartTask, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
 import { hashcat } from '../../wailsjs/go/models';
 
 interface ScannedAssets {
@@ -23,6 +23,7 @@ type TaskConfig = Required<Pick<hashcat.HashcatArgs,
   'OutputFormat' |
   'Quiet' |
   'StatusTimer' |
+  'ExtraArguments' |
   'EnableMaskIncrementMode' |
   'MaskIncrementMin' |
   'MaskIncrementMax'
@@ -40,6 +41,7 @@ const DEFAULT_CONFIG: TaskConfig = {
   OutputFormat: [1],
   Quiet: false,
   StatusTimer: 10,
+  ExtraArguments: [],
   EnableMaskIncrementMode: false,
   MaskIncrementMin: 1,
   MaskIncrementMax: 8,
@@ -47,6 +49,9 @@ const DEFAULT_CONFIG: TaskConfig = {
 
 export const NewTask = () => {
   const [config, setConfig] = useState<TaskConfig>({ ...DEFAULT_CONFIG });
+  const [taskMode, setTaskMode] = useState<'guided' | 'raw'>('guided');
+  const [rawArgs, setRawArgs] = useState('--version');
+  const [extraArgInput, setExtraArgInput] = useState('');
   const [preview, setPreview] = useState<string[]>([]);
   const [previewError, setPreviewError] = useState<string>('');
   const [assets, setAssets] = useState<ScannedAssets | null>(null);
@@ -86,8 +91,23 @@ export const NewTask = () => {
   useEffect(() => {
     const updatePreview = async () => {
       try {
+        if (taskMode === 'raw') {
+          if (window.go?.main?.App) {
+            const args = await PreviewRawTask(rawArgs);
+            setPreview(args);
+            setPreviewError('');
+          } else {
+            setPreview(parseCommandLine(rawArgs));
+            setPreviewError('');
+          }
+          return;
+        }
+
+        const argsFromInput = extraArgInput.trim() ? parseCommandLine(extraArgInput) : [];
+        const configForPreview = { ...config, ExtraArguments: argsFromInput };
+
         if (window.go?.main?.App) {
-          const args = await PreviewTask(config);
+          const args = await PreviewTask(configForPreview);
           setPreview(args);
           setPreviewError('');
         } else {
@@ -98,6 +118,7 @@ export const NewTask = () => {
           const args = ['-m', String(config.HashMode), '-a', String(config.AttackMode), config.Hash, '-o', config.OutputFile];
           if (config.AttackMode === 0) { config.Dictionaries.forEach(d => args.push(d)); config.Rules.forEach(r => args.push('-r', r)); }
           if (config.AttackMode === 3) args.push(config.Mask);
+          args.push(...argsFromInput);
           setPreview(args);
           setPreviewError('');
         }
@@ -107,7 +128,7 @@ export const NewTask = () => {
       }
     };
     updatePreview();
-  }, [config]);
+  }, [config, extraArgInput, rawArgs, taskMode]);
 
   const filteredAlgorithms = useMemo(() => {
     const entries = Object.entries(algorithms);
@@ -137,11 +158,16 @@ export const NewTask = () => {
   const handleCreate = async (start: boolean) => {
     setCreating(true);
     try {
+      let taskId = '';
       if (window.go?.main?.App) {
-        const taskId = await CreateTask(config);
+        if (taskMode === 'raw') {
+          taskId = await CreateRawTask(rawArgs);
+        } else {
+          taskId = await CreateTask({ ...config, ExtraArguments: extraArgInput.trim() ? parseCommandLine(extraArgInput) : [] });
+        }
         if (start) await StartTask(taskId);
       }
-      setConfig({ ...DEFAULT_CONFIG, OutputFile: config.OutputFile });
+      if (taskMode === 'guided') setConfig({ ...DEFAULT_CONFIG, OutputFile: config.OutputFile });
     } catch (err: unknown) {
       console.error('Create failed', err);
     } finally {
@@ -166,6 +192,32 @@ export const NewTask = () => {
 
         {/* Form */}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', paddingRight: '0.5rem', paddingBottom: '1rem' }}>
+
+          <div className="segmented-control" role="group" aria-label="Task mode">
+            <button type="button" className={taskMode === 'guided' ? 'active' : ''} onClick={() => setTaskMode('guided')}>Guided</button>
+            <button type="button" className={taskMode === 'raw' ? 'active' : ''} onClick={() => setTaskMode('raw')}>Raw Arguments</button>
+          </div>
+
+          {taskMode === 'raw' ? (
+            <div className="glass-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <TerminalSquare size={16} style={{ color: 'var(--cyan)' }} />
+                <span className="section-title" style={{ margin: 0 }}>Direct Hashcat Arguments</span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Arguments or full command</label>
+                <textarea
+                  className="form-input"
+                  value={rawArgs}
+                  onChange={e => setRawArgs(e.target.value)}
+                  placeholder={'hashcat -m 0 -a 3 hashes.txt ?a?a?a?a\n--show -m 1000 hashes.txt'}
+                  rows={7}
+                  style={{ fontFamily: 'var(--font-mono)', resize: 'vertical', minHeight: 128 }}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
 
           {/* Target */}
           <div className="glass-card">
@@ -263,6 +315,23 @@ export const NewTask = () => {
               <input className="form-input" type="text" value={config.OutputFile} onChange={e => handleChange('OutputFile', e.target.value)} placeholder="/path/to/output.txt" />
             </div>
           </div>
+
+          <div className="glass-card">
+            <div className="section-title">Advanced Hashcat Flags</div>
+            <div className="form-group">
+              <label className="form-label">Extra Arguments</label>
+              <textarea
+                className="form-input"
+                value={extraArgInput}
+                onChange={e => setExtraArgInput(e.target.value)}
+                placeholder="--hex-charset --runtime=60 --backend-ignore-metal"
+                rows={4}
+                style={{ fontFamily: 'var(--font-mono)', resize: 'vertical', minHeight: 88 }}
+              />
+            </div>
+          </div>
+            </>
+          )}
         </div>
 
         {/* Preview Panel */}
@@ -301,3 +370,58 @@ export const NewTask = () => {
     </motion.div>
   );
 };
+
+function parseCommandLine(input: string) {
+  const tokens: string[] = [];
+  let current = '';
+  let quote: '"' | "'" | null = null;
+  let escaped = false;
+  let inToken = false;
+
+  for (const char of input) {
+    if (escaped) {
+      current += char;
+      escaped = false;
+      inToken = true;
+      continue;
+    }
+    if (char === '\\') {
+      escaped = true;
+      inToken = true;
+      continue;
+    }
+    if (quote) {
+      if (char === quote) {
+        quote = null;
+      } else {
+        current += char;
+      }
+      inToken = true;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      inToken = true;
+      continue;
+    }
+    if (/\s/.test(char)) {
+      if (inToken) {
+        tokens.push(current);
+        current = '';
+        inToken = false;
+      }
+      continue;
+    }
+    current += char;
+    inToken = true;
+  }
+
+  if (escaped) current += '\\';
+  if (quote) throw new Error('unterminated quote in arguments');
+  if (inToken) tokens.push(current);
+  if (tokens.length > 0 && /^(hashcat|hashcat\.exe|hashcat\.bin)$/i.test(tokens[0].split(/[\\/]/).pop() || '')) {
+    tokens.shift();
+  }
+  if (tokens.length === 0) throw new Error('missing hashcat arguments');
+  return tokens;
+}
