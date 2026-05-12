@@ -242,6 +242,26 @@ body {
   margin-bottom: 2rem;
 }
 
+.setup-onboarding {
+  gap: 0;
+}
+
+.setup-onboarding .setup-logo {
+  will-change: transform, width, height;
+}
+
+.setup-onboarding-content,
+.setup-choice-content {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.setup-choice-content {
+  overflow: visible;
+}
+
 .setup-primary,
 .setup-action {
   border: 0;
