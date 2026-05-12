@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+First-run setup motion polish.
+
+- Changed the Get Started transition so the logo smoothly resizes and moves into its setup position instead of the whole welcome screen fading upward.
+- Morphed the Get Started button into the Download Hashcat button while the secondary existing-install option appears smoothly beneath it.
+
 ## 0.3.0
 
 Dark theme by default, a polished macOS installer, and a few bug fixes.

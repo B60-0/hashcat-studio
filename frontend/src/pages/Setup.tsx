@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Transition } from 'framer-motion';
 import { Check, Download, Loader2, Terminal } from 'lucide-react';
 import logo from '../assets/hashcat-logo.png';
 import {
@@ -42,6 +42,11 @@ const MOCK_LOGS = [
   '[start] Preparing Hashcat Studio',
   '[download] Waiting for installer...',
 ];
+
+const setupMorphTransition: Transition = {
+  layout: { duration: 0.48, ease: [0.22, 1, 0.36, 1] },
+  opacity: { duration: 0.18, ease: 'easeOut' },
+};
 
 export const Setup = ({ initialState, onComplete }: SetupProps) => {
   const [stage, setStage] = useState<SetupStage>(initialState?.running ? 'installing' : 'welcome');
@@ -152,44 +157,80 @@ export const Setup = ({ initialState, onComplete }: SetupProps) => {
       <div className="setup-language">ENGLISH</div>
 
       <AnimatePresence mode="wait">
-        {stage === 'welcome' && (
+        {(stage === 'welcome' || stage === 'choose') && (
           <motion.div
-            key="welcome"
-            className="setup-center"
+            key="onboarding"
+            layout
+            className={`setup-center setup-onboarding ${stage === 'choose' ? 'setup-choice-panel' : ''}`}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.28 }}
+            exit={{ opacity: 0 }}
+            transition={setupMorphTransition}
           >
-            <img className="setup-logo setup-logo-large" src={logo} alt="Hashcat Studio" />
-            <button className="setup-primary" onClick={() => setStage('choose')}>Get Started</button>
-          </motion.div>
-        )}
+            <motion.img
+              layout
+              className={`setup-logo ${stage === 'welcome' ? 'setup-logo-large' : ''}`}
+              src={logo}
+              alt="Hashcat Studio"
+              transition={setupMorphTransition}
+            />
 
-        {stage === 'choose' && (
-          <motion.div
-            key="choose"
-            className="setup-center setup-choice-panel"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.28 }}
-          >
-            <img className="setup-logo" src={logo} alt="Hashcat Studio" />
-            <h1>Set up Hashcat</h1>
-            <p>Download the latest official Hashcat release and let Hashcat Studio configure it for you.</p>
+            <div className="setup-onboarding-content">
+              <AnimatePresence initial={false} mode="popLayout">
+                {stage === 'welcome' ? (
+                  <motion.button
+                    key="get-started"
+                    layoutId="setup-primary-action"
+                    className="setup-primary"
+                    onClick={() => setStage('choose')}
+                    transition={setupMorphTransition}
+                  >
+                    Get Started
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    key="choose-content"
+                    layout
+                    className="setup-choice-content"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={setupMorphTransition}
+                  >
+                    <motion.h1 layout>Set up Hashcat</motion.h1>
+                    <motion.p layout>
+                      Download the latest official Hashcat release and let Hashcat Studio configure it for you.
+                    </motion.p>
 
-            <div className="setup-actions">
-              <button className="setup-action setup-action-main" onClick={startDownload} disabled={!!busyAction}>
-                {busyAction === 'download' ? <Loader2 className="spinning" size={18} /> : <Download size={18} />}
-                Download Hashcat
-              </button>
-              <button className="setup-link-button" onClick={finishWithExisting} disabled={!!busyAction}>
-                {busyAction === 'directory' ? 'Opening folder picker...' : 'Point to an already installed Hashcat folder'}
-              </button>
+                    <motion.div layout className="setup-actions">
+                      <motion.button
+                        layoutId="setup-primary-action"
+                        className="setup-action setup-action-main"
+                        onClick={startDownload}
+                        disabled={!!busyAction}
+                        transition={setupMorphTransition}
+                      >
+                        {busyAction === 'download' ? <Loader2 className="spinning" size={18} /> : <Download size={18} />}
+                        Download Hashcat
+                      </motion.button>
+                      <motion.button
+                        layout
+                        className="setup-link-button"
+                        onClick={finishWithExisting}
+                        disabled={!!busyAction}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.08, duration: 0.18 }}
+                      >
+                        {busyAction === 'directory' ? 'Opening folder picker...' : 'Point to an already installed Hashcat folder'}
+                      </motion.button>
+                    </motion.div>
+
+                    {error && <div className="setup-error">{error}</div>}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-
-            {error && <div className="setup-error">{error}</div>}
           </motion.div>
         )}
 
