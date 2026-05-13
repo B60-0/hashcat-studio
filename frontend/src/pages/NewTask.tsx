@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TerminalSquare } from 'lucide-react';
-import { CreateRawTask, CreateTask, GetDevices, GetSettings, PreviewRawTask, PreviewTask, ScanAssets, StartTask, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
+import { ChevronDown, FileUp, FolderOpen, Search, TerminalSquare } from 'lucide-react';
+import { CreateRawTask, CreateTask, GetDevices, GetSettings, PreviewRawTask, PreviewTask, ScanAssets, SelectDirectory, SelectFile, StartTask, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
 import { hashcat } from '../../wailsjs/go/models';
 import { formatDeviceLabel, OPENCL_DEVICE_TYPES, parseHashcatDevices } from '../lib/hashcatDevices';
 import type { HashcatDevice } from '../lib/hashcatDevices';
@@ -28,6 +28,7 @@ type TaskConfig = Required<Pick<hashcat.HashcatArgs,
   'ExtraArguments' |
   'DevicesIDs' |
   'DevicesTypes' |
+  'WorkloadProfile' |
   'EnableMaskIncrementMode' |
   'MaskIncrementMin' |
   'MaskIncrementMax'
@@ -47,7 +48,8 @@ const DEFAULT_CONFIG: TaskConfig = {
   StatusTimer: 10,
   ExtraArguments: [],
   DevicesIDs: [],
-  DevicesTypes: [],
+  DevicesTypes: [2],
+  WorkloadProfile: 4,
   EnableMaskIncrementMode: false,
   MaskIncrementMin: 1,
   MaskIncrementMax: 8,
@@ -64,6 +66,8 @@ export const NewTask = () => {
   const [devices, setDevices] = useState<HashcatDevice[]>([]);
   const [algorithms, setAlgorithms] = useState<Record<string, string>>({});
   const [algoSearch, setAlgoSearch] = useState('');
+  const [algoOpen, setAlgoOpen] = useState(false);
+  const [selectingPath, setSelectingPath] = useState(false);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -76,7 +80,9 @@ export const NewTask = () => {
             GetDevices().catch(() => ''),
           ]);
           setAssets(loadedAssets);
-          setDevices(parseHashcatDevices(deviceOutput));
+          const parsedDevices = parseHashcatDevices(deviceOutput);
+          setDevices(parsedDevices);
+          setConfig(c => ({ ...c, ...strongestHardwareSelection(parsedDevices) }));
           const info = await ValidateHashcatBinary(settings.hashcatBinaryPath);
           if (info?.valid && info.algorithms) setAlgorithms(info.algorithms);
           setConfig(c => ({ ...c, OutputFile: settings.outputDir ? `${settings.outputDir}/found.txt` : '' }));
@@ -87,14 +93,15 @@ export const NewTask = () => {
             rules: ['/mock/best64.rule'],
             masks: ['/mock/mask.hcmask'],
           });
-          setDevices(parseHashcatDevices(
+          const parsedDevices = parseHashcatDevices(
             "CUDA API (CUDA 12.1)\n====================\n" +
             "* Device #1: NVIDIA GeForce RTX 3080, 10000/10240 MB, 68MCU\n\n" +
             "OpenCL API (OpenCL 3.0 CUDA 12.1.105)\n======================================\n" +
             "* Device #2: Intel Core i9 CPU, 16000/32000 MB"
-          ));
+          );
+          setDevices(parsedDevices);
           setAlgorithms({ '0': 'MD5', '100': 'SHA1', '1000': 'NTLM', '1400': 'SHA2-256', '1700': 'SHA2-512' });
-          setConfig(c => ({ ...c, OutputFile: '/mock/output.txt' }));
+          setConfig(c => ({ ...c, ...strongestHardwareSelection(parsedDevices), OutputFile: '/mock/output.txt' }));
         }
       } catch (err) {
         console.error('Init error', err);
@@ -161,6 +168,8 @@ export const NewTask = () => {
     return matches;
   }, [algorithms, algoSearch, config.HashMode]);
 
+  const selectedAlgorithmName = algorithms[String(config.HashMode)] || 'Unknown';
+
   const handleChange = <K extends keyof TaskConfig>(field: K, value: TaskConfig[K]) => {
     setConfig(prev => ({ ...prev, [field]: value }));
   };
@@ -170,6 +179,27 @@ export const NewTask = () => {
       const arr = prev[field];
       return { ...prev, [field]: arr.includes(value) ? arr.filter(i => i !== value) : [...arr, value] };
     });
+  };
+
+  const appendArrayValue = (field: 'Dictionaries' | 'Rules', value: string) => {
+    if (!value) return;
+    setConfig(prev => prev[field].includes(value) ? prev : { ...prev, [field]: [...prev[field], value] });
+  };
+
+  const choosePath = async (kind: 'file' | 'folder', title: string) => {
+    setSelectingPath(true);
+    try {
+      if (window.go?.main?.App) {
+        return kind === 'file' ? await SelectFile(title) : await SelectDirectory(title);
+      }
+      await new Promise(r => setTimeout(r, 250));
+      return kind === 'file' ? `/mock/${title.toLowerCase().replace(/\s+/g, '-')}.txt` : `/mock/${title.toLowerCase().replace(/\s+/g, '-')}`;
+    } catch (err) {
+      console.error('Path selection failed', err);
+      return '';
+    } finally {
+      setSelectingPath(false);
+    }
   };
 
   const handleDeviceToggle = (id: number) => {
@@ -253,20 +283,57 @@ export const NewTask = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="form-group">
                 <label className="form-label">Hash Input / File</label>
-                <input className="form-input" type="text" value={config.Hash} onChange={e => handleChange('Hash', e.target.value)} placeholder="/path/to/hashes.txt" />
+                <div className="path-input-row">
+                  <input className="form-input" type="text" value={config.Hash} onChange={e => handleChange('Hash', e.target.value)} placeholder="/path/to/hashes.txt" />
+                  <button className="btn-icon" type="button" disabled={selectingPath} onClick={async () => {
+                    const selected = await choosePath('file', 'Choose Hash File');
+                    if (selected) handleChange('Hash', selected);
+                  }} title="Select hash file">
+                    <FileUp size={15} />
+                  </button>
+                  <button className="btn-icon" type="button" disabled={selectingPath} onClick={async () => {
+                    const selected = await choosePath('folder', 'Choose Hash Folder');
+                    if (selected) handleChange('Hash', selected);
+                  }} title="Select hash folder">
+                    <FolderOpen size={15} />
+                  </button>
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Hash Mode (-m)</label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'relative', marginBottom: '0.375rem' }}>
+                <div className="algorithm-picker">
+                  <button type="button" className="algorithm-picker-trigger" onClick={() => setAlgoOpen(open => !open)}>
+                    <span>
+                      <strong>{config.HashMode}</strong> {selectedAlgorithmName}
+                    </span>
+                    <ChevronDown size={15} />
+                  </button>
+                  {algoOpen && (
+                    <div className="algorithm-picker-menu">
+                      <div style={{ position: 'relative', marginBottom: '0.375rem' }}>
                     <Search size={14} style={{ position: 'absolute', left: '0.625rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                    <input className="form-input" style={{ paddingLeft: '2rem' }} type="text" placeholder="Search algorithms..." value={algoSearch} onChange={e => setAlgoSearch(e.target.value)} />
-                  </div>
-                  <select className="form-select" value={config.HashMode} onChange={e => handleChange('HashMode', parseInt(e.target.value, 10))}>
-                    {filteredAlgorithms.map(([id, name]) => (
-                      <option key={id} value={id}>{id} – {name as string}</option>
-                    ))}
-                  </select>
+                        <input className="form-input" style={{ paddingLeft: '2rem' }} type="text" placeholder="Search Algorithms..." value={algoSearch} onChange={e => setAlgoSearch(e.target.value)} autoFocus />
+                      </div>
+                      <div className="algorithm-picker-list">
+                        {filteredAlgorithms.map(([id, name]) => (
+                          <button
+                            type="button"
+                            key={id}
+                            className={Number(id) === config.HashMode ? 'active' : ''}
+                            onClick={() => {
+                              handleChange('HashMode', parseInt(id, 10));
+                              setAlgoSearch('');
+                              setAlgoOpen(false);
+                            }}
+                          >
+                            <strong>{id}</strong>
+                            <span>{name as string}</span>
+                          </button>
+                        ))}
+                        {filteredAlgorithms.length === 0 && <div className="algorithm-picker-empty">No matching algorithms</div>}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -289,6 +356,14 @@ export const NewTask = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                     <div className="form-group">
                       <label className="form-label">Dictionaries {config.Dictionaries.length > 0 && <span style={{ color: 'var(--accent)' }}>({config.Dictionaries.length})</span>}</label>
+                      <div className="path-button-row">
+                        <button className="btn btn-ghost" type="button" disabled={selectingPath} onClick={async () => appendArrayValue('Dictionaries', await choosePath('file', 'Choose Dictionary File'))}>
+                          <FileUp size={14} /> Select File
+                        </button>
+                        <button className="btn btn-ghost" type="button" disabled={selectingPath} onClick={async () => appendArrayValue('Dictionaries', await choosePath('folder', 'Choose Dictionary Folder'))}>
+                          <FolderOpen size={14} /> Select Folder
+                        </button>
+                      </div>
                       <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', maxHeight: '140px', overflowY: 'auto', padding: '0.25rem' }}>
                         {assets?.dictionaries?.length ? assets.dictionaries.map(d => (
                           <label key={d} className="checkbox-item">
@@ -501,4 +576,16 @@ function parseCommandLine(input: string) {
   }
   if (tokens.length === 0) throw new Error('missing hashcat arguments');
   return tokens;
+}
+
+function strongestHardwareSelection(devices: HashcatDevice[]) {
+  const gpuIds = devices
+    .filter(device => device.type.toLowerCase().includes('gpu'))
+    .map(device => device.id);
+
+  return {
+    DevicesTypes: [2],
+    DevicesIDs: gpuIds,
+    WorkloadProfile: 4,
+  };
 }

@@ -58,7 +58,7 @@ func New() (*SettingsManager, error) {
 			MasksDir:               filepath.Join(appDir, "masks"),
 			OutputDir:              filepath.Join(appDir, "output"),
 			DefaultStatusTimer:     10,
-			DefaultWorkloadProfile: 2,
+			DefaultWorkloadProfile: 4,
 			Theme:                  "dark",
 			EscrowEnabled:          false,
 			HashesComAPIKey:        "",
@@ -101,7 +101,7 @@ func (sm *SettingsManager) applyDefaults() {
 		sm.settings.DefaultStatusTimer = 10
 	}
 	if sm.settings.DefaultWorkloadProfile == 0 {
-		sm.settings.DefaultWorkloadProfile = 2
+		sm.settings.DefaultWorkloadProfile = 4
 	}
 	if sm.settings.Theme != "light" && sm.settings.Theme != "dark" {
 		sm.settings.Theme = "dark"

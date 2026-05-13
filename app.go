@@ -10,6 +10,8 @@ import (
 	"hashcat-studio/internal/tasks"
 	"strings"
 	"sync"
+
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -91,6 +93,32 @@ func (a *App) GetAssetFolders() AssetFolders {
 		RulesDir:        s.RulesDir,
 		MasksDir:        s.MasksDir,
 	}
+}
+
+// SelectFile opens the native OS file picker and returns the selected path.
+func (a *App) SelectFile(title string) (string, error) {
+	if a.ctx == nil {
+		return "", fmt.Errorf("app context not ready")
+	}
+	if strings.TrimSpace(title) == "" {
+		title = "Choose File"
+	}
+	return wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
+		Title: title,
+	})
+}
+
+// SelectDirectory opens the native OS folder picker and returns the selected path.
+func (a *App) SelectDirectory(title string) (string, error) {
+	if a.ctx == nil {
+		return "", fmt.Errorf("app context not ready")
+	}
+	if strings.TrimSpace(title) == "" {
+		title = "Choose Folder"
+	}
+	return wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{
+		Title: title,
+	})
 }
 
 type ScannedAssets struct {

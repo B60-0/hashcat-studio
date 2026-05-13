@@ -43,6 +43,10 @@ export function RunBenchmarkWithOptions(arg1:number,arg2:hashcat.BenchmarkOption
 
 export function ScanAssets():Promise<main.ScannedAssets>;
 
+export function SelectDirectory(arg1:string):Promise<string>;
+
+export function SelectFile(arg1:string):Promise<string>;
+
 export function SelectHashcatBinary():Promise<main.SetupState>;
 
 export function SelectHashcatDirectory():Promise<main.SetupState>;

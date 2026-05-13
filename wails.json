@@ -12,7 +12,7 @@
   "info": {
     "companyName": "Hashcat Studio",
     "productName": "Hashcat Studio",
-    "productVersion": "0.4.2",
+    "productVersion": "0.4.3",
     "copyright": "Copyright 2026",
     "comments": "A simple desktop interface for authorized Hashcat sessions"
   }

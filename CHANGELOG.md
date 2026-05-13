@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.3
+
+New task picker polish and escrow controls.
+
+- Added native file and folder pickers next to the hash input and dictionary selectors.
+- Replaced hash mode selection with a searchable algorithm picker that opens directly into the full list.
+- Added escrow search, sort, minimum reward, and empty-job filters.
+- Added a Start Task action on escrow jobs that pulls hashes, selects the job hash mode, uses the chosen dictionary, and starts immediately.
+- Defaulted guided tasks to GPU hardware and the strongest workload profile.
+- Added immediate theme-switch progress feedback for smoother light/dark changes.
+
 ## 0.4.2
 
 Hardware selection and targeted benchmarks.
