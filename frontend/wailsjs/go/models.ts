@@ -1,5 +1,19 @@
 export namespace hashcat {
 
+	export class BenchmarkOptions {
+	    deviceIDs: number[];
+	    deviceTypes: number[];
+
+	    static createFrom(source: any = {}) {
+	        return new BenchmarkOptions(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.deviceIDs = source["deviceIDs"];
+	        this.deviceTypes = source["deviceTypes"];
+	    }
+	}
 	export class HashcatArgs {
 	    Session?: string;
 	    AttackMode?: number;

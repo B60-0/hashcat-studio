@@ -30,6 +30,23 @@ func TestRunBenchmark_NotFound(t *testing.T) {
 	}
 }
 
+func TestBenchmarkArgsWithHardwareSelection(t *testing.T) {
+	args := benchmarkArgs(1000, BenchmarkOptions{
+		DeviceIDs:   []int{1, 3},
+		DeviceTypes: []int{2},
+	})
+	want := []string{"-b", "-m1000", "--quiet", "-d", "1,3", "-D", "2"}
+
+	if len(args) != len(want) {
+		t.Fatalf("Expected %d args, got %d: %v", len(want), len(args), args)
+	}
+	for i := range want {
+		if args[i] != want[i] {
+			t.Fatalf("Arg %d: expected %q, got %q in %v", i, want[i], args[i], args)
+		}
+	}
+}
+
 // Test with mocked shell scripts acting as hashcat binary
 func TestMockedBinary(t *testing.T) {
 	tempDir := t.TempDir()

@@ -70,6 +70,10 @@ export function RunBenchmark(arg1) {
   return window['go']['main']['App']['RunBenchmark'](arg1);
 }
 
+export function RunBenchmarkWithOptions(arg1, arg2) {
+  return window['go']['main']['App']['RunBenchmarkWithOptions'](arg1, arg2);
+}
+
 export function ScanAssets() {
   return window['go']['main']['App']['ScanAssets']();
 }

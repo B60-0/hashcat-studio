@@ -22,6 +22,11 @@ type HashcatBinaryInfo struct {
 	Error      string         `json:"error"`
 }
 
+type BenchmarkOptions struct {
+	DeviceIDs   []int `json:"deviceIDs"`
+	DeviceTypes []int `json:"deviceTypes"`
+}
+
 // ValidateHashcatBinary checks if the hashcat binary exists and extracts its version and algorithms.
 func ValidateHashcatBinary(binaryPath string) HashcatBinaryInfo {
 	info := HashcatBinaryInfo{
@@ -101,8 +106,13 @@ func GetDevices(binaryPath string) (string, error) {
 
 // RunBenchmark runs a benchmark for a specific hash mode and returns the output
 func RunBenchmark(binaryPath string, hashMode int) (string, error) {
+	return RunBenchmarkWithOptions(binaryPath, hashMode, BenchmarkOptions{})
+}
+
+// RunBenchmarkWithOptions runs a benchmark for a specific hash mode and hardware selection.
+func RunBenchmarkWithOptions(binaryPath string, hashMode int, options BenchmarkOptions) (string, error) {
 	wdir := filepath.Dir(binaryPath)
-	cmd := exec.Command(binaryPath, "-b", fmt.Sprintf("-m%d", hashMode), "--quiet")
+	cmd := exec.Command(binaryPath, benchmarkArgs(hashMode, options)...)
 	cmd.Dir = wdir
 
 	benchmarkBytes, err := cmd.CombinedOutput()
@@ -111,4 +121,15 @@ func RunBenchmark(binaryPath string, hashMode int) (string, error) {
 	}
 
 	return strings.TrimSpace(string(benchmarkBytes)), nil
+}
+
+func benchmarkArgs(hashMode int, options BenchmarkOptions) []string {
+	args := []string{"-b", fmt.Sprintf("-m%d", hashMode), "--quiet"}
+	if len(options.DeviceIDs) > 0 {
+		args = append(args, "-d", joinInts(options.DeviceIDs, ","))
+	}
+	if len(options.DeviceTypes) > 0 {
+		args = append(args, "-D", joinInts(options.DeviceTypes, ","))
+	}
+	return args
 }

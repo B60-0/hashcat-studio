@@ -39,6 +39,8 @@ export function ResumeTask(arg1:string):Promise<void>;
 
 export function RunBenchmark(arg1:number):Promise<string>;
 
+export function RunBenchmarkWithOptions(arg1:number,arg2:hashcat.BenchmarkOptions):Promise<string>;
+
 export function ScanAssets():Promise<main.ScannedAssets>;
 
 export function SelectHashcatBinary():Promise<main.SetupState>;

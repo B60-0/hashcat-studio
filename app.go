@@ -221,6 +221,18 @@ func (a *App) RunBenchmark(hashMode int) (string, error) {
 	return hashcat.RunBenchmark(path, hashMode)
 }
 
+// RunBenchmarkWithOptions runs a hashcat benchmark for a specific mode and hardware selection.
+func (a *App) RunBenchmarkWithOptions(hashMode int, options hashcat.BenchmarkOptions) (string, error) {
+	if a.settingsManager == nil {
+		return "", fmt.Errorf("settings manager not initialized")
+	}
+	path := a.settingsManager.Get().HashcatBinaryPath
+	if path == "" {
+		return "", fmt.Errorf("hashcat binary path not set")
+	}
+	return hashcat.RunBenchmarkWithOptions(path, hashMode, options)
+}
+
 // --- Task Manager APIs ---
 
 // CreateTask builds args and creates a queued task

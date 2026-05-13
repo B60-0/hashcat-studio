@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, TerminalSquare } from 'lucide-react';
-import { CreateRawTask, CreateTask, GetSettings, PreviewRawTask, PreviewTask, ScanAssets, StartTask, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
+import { CreateRawTask, CreateTask, GetDevices, GetSettings, PreviewRawTask, PreviewTask, ScanAssets, StartTask, ValidateHashcatBinary } from '../../wailsjs/go/main/App';
 import { hashcat } from '../../wailsjs/go/models';
+import { formatDeviceLabel, OPENCL_DEVICE_TYPES, parseHashcatDevices } from '../lib/hashcatDevices';
+import type { HashcatDevice } from '../lib/hashcatDevices';
 
 interface ScannedAssets {
   hashes: string[];
@@ -24,6 +26,8 @@ type TaskConfig = Required<Pick<hashcat.HashcatArgs,
   'Quiet' |
   'StatusTimer' |
   'ExtraArguments' |
+  'DevicesIDs' |
+  'DevicesTypes' |
   'EnableMaskIncrementMode' |
   'MaskIncrementMin' |
   'MaskIncrementMax'
@@ -42,6 +46,8 @@ const DEFAULT_CONFIG: TaskConfig = {
   Quiet: false,
   StatusTimer: 10,
   ExtraArguments: [],
+  DevicesIDs: [],
+  DevicesTypes: [],
   EnableMaskIncrementMode: false,
   MaskIncrementMin: 1,
   MaskIncrementMax: 8,
@@ -55,6 +61,7 @@ export const NewTask = () => {
   const [preview, setPreview] = useState<string[]>([]);
   const [previewError, setPreviewError] = useState<string>('');
   const [assets, setAssets] = useState<ScannedAssets | null>(null);
+  const [devices, setDevices] = useState<HashcatDevice[]>([]);
   const [algorithms, setAlgorithms] = useState<Record<string, string>>({});
   const [algoSearch, setAlgoSearch] = useState('');
   const [creating, setCreating] = useState(false);
@@ -63,11 +70,13 @@ export const NewTask = () => {
     const load = async () => {
       try {
         if (window.go?.main?.App) {
-          const [loadedAssets, settings] = await Promise.all([
+          const [loadedAssets, settings, deviceOutput] = await Promise.all([
             ScanAssets(),
             GetSettings(),
+            GetDevices().catch(() => ''),
           ]);
           setAssets(loadedAssets);
+          setDevices(parseHashcatDevices(deviceOutput));
           const info = await ValidateHashcatBinary(settings.hashcatBinaryPath);
           if (info?.valid && info.algorithms) setAlgorithms(info.algorithms);
           setConfig(c => ({ ...c, OutputFile: settings.outputDir ? `${settings.outputDir}/found.txt` : '' }));
@@ -78,6 +87,12 @@ export const NewTask = () => {
             rules: ['/mock/best64.rule'],
             masks: ['/mock/mask.hcmask'],
           });
+          setDevices(parseHashcatDevices(
+            "CUDA API (CUDA 12.1)\n====================\n" +
+            "* Device #1: NVIDIA GeForce RTX 3080, 10000/10240 MB, 68MCU\n\n" +
+            "OpenCL API (OpenCL 3.0 CUDA 12.1.105)\n======================================\n" +
+            "* Device #2: Intel Core i9 CPU, 16000/32000 MB"
+          ));
           setAlgorithms({ '0': 'MD5', '100': 'SHA1', '1000': 'NTLM', '1400': 'SHA2-256', '1700': 'SHA2-512' });
           setConfig(c => ({ ...c, OutputFile: '/mock/output.txt' }));
         }
@@ -116,6 +131,8 @@ export const NewTask = () => {
           if (config.AttackMode === 0 && config.Dictionaries.length === 0) { setPreviewError('Select at least one dictionary'); setPreview([]); return; }
           if (config.AttackMode === 3 && !config.Mask) { setPreviewError('Mask pattern is required'); setPreview([]); return; }
           const args = ['-m', String(config.HashMode), '-a', String(config.AttackMode), config.Hash, '-o', config.OutputFile];
+          if (config.DevicesIDs.length > 0) args.push('-d', config.DevicesIDs.join(','));
+          if (config.DevicesTypes.length > 0) args.push('-D', config.DevicesTypes.join(','));
           if (config.AttackMode === 0) { config.Dictionaries.forEach(d => args.push(d)); config.Rules.forEach(r => args.push('-r', r)); }
           if (config.AttackMode === 3) args.push(config.Mask);
           args.push(...argsFromInput);
@@ -153,6 +170,17 @@ export const NewTask = () => {
       const arr = prev[field];
       return { ...prev, [field]: arr.includes(value) ? arr.filter(i => i !== value) : [...arr, value] };
     });
+  };
+
+  const handleDeviceToggle = (id: number) => {
+    setConfig(prev => {
+      const selected = prev.DevicesIDs.includes(id);
+      return { ...prev, DevicesIDs: selected ? prev.DevicesIDs.filter(deviceId => deviceId !== id) : [...prev.DevicesIDs, id] };
+    });
+  };
+
+  const handleDeviceTypeChange = (value: number) => {
+    setConfig(prev => ({ ...prev, DevicesTypes: value === 0 ? [] : [value] }));
   };
 
   const handleCreate = async (start: boolean) => {
@@ -313,6 +341,55 @@ export const NewTask = () => {
             <div className="form-group">
               <label className="form-label">Output File Path</label>
               <input className="form-input" type="text" value={config.OutputFile} onChange={e => handleChange('OutputFile', e.target.value)} placeholder="/path/to/output.txt" />
+            </div>
+          </div>
+
+          <div className="glass-card">
+            <div className="section-title">Hardware</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="form-group">
+                <label className="form-label">Device Type (-D)</label>
+                <select
+                  className="form-select"
+                  value={config.DevicesTypes[0] ?? 0}
+                  onChange={e => handleDeviceTypeChange(parseInt(e.target.value, 10))}
+                >
+                  {OPENCL_DEVICE_TYPES.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Selected IDs (-d)</label>
+                <input
+                  className="form-input"
+                  type="text"
+                  value={config.DevicesIDs.join(',') || 'All detected'}
+                  readOnly
+                />
+              </div>
+            </div>
+            <div className="form-group" style={{ marginTop: '0.75rem' }}>
+              <label className="form-label">Device IDs</label>
+              <div className="hardware-device-list">
+                {devices.length > 0 ? devices.map(device => (
+                  <label key={device.id} className="hardware-device-option">
+                    <input
+                      type="checkbox"
+                      checked={config.DevicesIDs.includes(device.id)}
+                      onChange={() => handleDeviceToggle(device.id)}
+                    />
+                    <span className="hardware-device-main">
+                      <span>{formatDeviceLabel(device)}</span>
+                      <span className="hardware-device-meta">
+                        {device.backend} / {device.type}{device.memory ? ` / ${device.memory}` : ''}
+                      </span>
+                    </span>
+                  </label>
+                )) : (
+                  <div className="hardware-device-empty">No devices reported by hashcat.</div>
+                )}
+              </div>
             </div>
           </div>
 
