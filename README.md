@@ -125,6 +125,32 @@ The desktop binary is written to `build/bin/`.
 </details>
 
 <details>
+<summary><strong>macOS signing and notarization</strong></summary>
+
+<br>
+
+Unsigned macOS builds require users to override Gatekeeper. To ship a DMG that opens normally, enroll in the Apple Developer Program, create a Developer ID Application certificate, and configure these GitHub Actions secrets before creating a `v*` release tag:
+
+| Secret | Value |
+| --- | --- |
+| `MACOS_CERTIFICATE_P12` | Base64-encoded Developer ID Application `.p12` certificate |
+| `MACOS_CERTIFICATE_PASSWORD` | Password for that `.p12` export |
+| `MACOS_CODESIGN_IDENTITY` | Full signing identity, for example `Developer ID Application: Name (TEAMID)` |
+| `APPLE_ID` | Apple ID used for notarization |
+| `APPLE_TEAM_ID` | Apple Developer Team ID |
+| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for the Apple ID |
+
+Create the base64 certificate value on macOS:
+
+```bash
+base64 -i DeveloperIDApplication.p12 | pbcopy
+```
+
+When all secrets are present, the release workflow signs the app with hardened runtime, notarizes the macOS DMG with Apple, staples the notarization ticket, and uploads the notarized DMG.
+
+</details>
+
+<details>
 <summary><strong>Development</strong></summary>
 
 <br>
