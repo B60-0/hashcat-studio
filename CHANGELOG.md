@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.2
+
+Hardware selection and targeted benchmarks.
+
+- Added parsed hardware cards on the Devices page from `hashcat -I` output.
+- Added CPU/GPU type filtering and exact device ID selection for benchmarks.
+- Added per-device benchmark buttons for quickly comparing hardware performance.
+- Added a Hardware section to guided task creation so tasks can target selected devices without raw flags.
+- Added benchmark argument tests and regenerated Wails bindings for the new benchmark options.
+
 ## 0.4.1
 
 Hashcat argument coverage and QA fixes.
